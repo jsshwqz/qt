@@ -24,6 +24,17 @@ python app/mirror_server.py
 
 The web viewer is served at `http://localhost:8000` and will connect to the WebSocket server on port `8765`.
 
+## Windows EXE build (no adb)
+
+The following creates a single-file Windows EXE that launches the server and opens the viewer page.
+
+```bash
+pip install pyinstaller
+pyinstaller --onefile --name MirrorView app/launcher.py
+```
+
+After packaging, the executable is located at `dist/MirrorView.exe`.
+
 ## Run the mock mobile sender
 
 ```bash

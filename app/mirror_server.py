@@ -5,6 +5,7 @@ import http.server
 import os
 import socketserver
 import threading
+import webbrowser
 from typing import Set
 
 from websockets.legacy.server import WebSocketServerProtocol, serve
@@ -72,24 +73,32 @@ async def start_ws_server(host: str, port: int):
         await asyncio.Future()
 
 
+async def run_server(host: str, http_port: int, ws_port: int, open_browser: bool = False):
+    httpd = start_http_server(host, http_port)
+    print(f"HTTP server running at http://{host}:{http_port}")
+    print(f"WebSocket server running at ws://{host}:{ws_port}")
+
+    if open_browser:
+        webbrowser.open(f"http://{host}:{http_port}")
+
+    try:
+        await start_ws_server(host, ws_port)
+    finally:
+        httpd.shutdown()
+
+
 def parse_args():
     parser = argparse.ArgumentParser(description="Simple mobile screen mirroring relay server")
     parser.add_argument("--host", default="0.0.0.0")
     parser.add_argument("--http-port", type=int, default=8000)
     parser.add_argument("--ws-port", type=int, default=8765)
+    parser.add_argument("--open-browser", action="store_true")
     return parser.parse_args()
 
 
 def main():
     args = parse_args()
-    httpd = start_http_server(args.host, args.http_port)
-    print(f"HTTP server running at http://{args.host}:{args.http_port}")
-    print(f"WebSocket server running at ws://{args.host}:{args.ws_port}")
-
-    try:
-        asyncio.run(start_ws_server(args.host, args.ws_port))
-    finally:
-        httpd.shutdown()
+    asyncio.run(run_server(args.host, args.http_port, args.ws_port, args.open_browser))
 
 
 if __name__ == "__main__":
