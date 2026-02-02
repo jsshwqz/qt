@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mobile Screen Mirror</title>
+    <style>
+      body {
+        margin: 0;
+        font-family: "Segoe UI", sans-serif;
+        background: #0f1115;
+        color: #f5f7ff;
+      }
+
+      header {
+        padding: 20px 32px;
+        background: #141824;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+      }
+
+      main {
+        display: flex;
+        height: calc(100vh - 80px);
+      }
+
+      .viewer {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .viewer img {
+        max-height: 90vh;
+        max-width: 90vw;
+        border-radius: 20px;
+        border: 1px solid #2a2f3d;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+        background: #1b1f2b;
+      }
+
+      .status {
+        font-size: 0.9rem;
+        opacity: 0.8;
+      }
+
+      .metrics {
+        font-size: 0.85rem;
+        opacity: 0.7;
+        text-align: right;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div>
+        <strong>Mobile Screen Mirror</strong>
+        <div class="status" id="status">Connecting...</div>
+      </div>
+      <div class="metrics" id="metrics">FPS: -- | Frame: --</div>
+    </header>
+    <main>
+      <div class="viewer">
+        <img id="screen" alt="Waiting for stream" />
+      </div>
+    </main>
+    <script>
+      const statusEl = document.getElementById("status");
+      const metricsEl = document.getElementById("metrics");
+      const screenEl = document.getElementById("screen");
+      const protocol = location.protocol === "https:" ? "wss" : "ws";
+      const endpoint = `${protocol}://${location.hostname}:8765/viewer`;
+      let socket;
+      let lastFrameTime = 0;
+
+      const updateMetrics = (blob) => {
+        const now = performance.now();
+        const delta = lastFrameTime ? (now - lastFrameTime) / 1000 : 0;
+        const fps = delta ? (1 / delta).toFixed(1) : "--";
+        lastFrameTime = now;
+        const sizeKb = (blob.size / 1024).toFixed(1);
+        metricsEl.textContent = `FPS: ${fps} | Frame: ${sizeKb} KB`;
+      };
+
+      const connect = () => {
+        statusEl.textContent = "Connecting...";
+        socket = new WebSocket(endpoint);
+
+        socket.addEventListener("open", () => {
+          statusEl.textContent = "Connected - waiting for frames";
+        });
+
+        socket.addEventListener("message", (event) => {
+          if (event.data instanceof Blob) {
+            const url = URL.createObjectURL(event.data);
+            screenEl.onload = () => URL.revokeObjectURL(url);
+            screenEl.src = url;
+            statusEl.textContent = "Streaming";
+            updateMetrics(event.data);
+          }
+        });
+
+        socket.addEventListener("close", () => {
+          statusEl.textContent = "Disconnected - retrying...";
+          setTimeout(connect, 2000);
+        });
+
+        socket.addEventListener("error", () => {
+          statusEl.textContent = "Error connecting";
+        });
+      };
+
+      connect();
+    </script>
+  </body>
+</html>

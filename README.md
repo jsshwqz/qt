@@ -1,0 +1,39 @@
+# Mobile Screen Mirroring (Prototype)
+
+This prototype provides a lightweight relay server and viewer for mirroring a mobile screen. It includes:
+
+- A WebSocket relay server that accepts binary frames from a sender.
+- A simple web viewer that displays the most recent frame and basic stream metrics.
+- A mock sender script that simulates a mobile device stream.
+
+## Requirements
+
+- Python 3.10+
+- `websockets`
+- `Pillow`
+
+```bash
+pip install -r requirements.txt
+```
+
+## Run the mirror server
+
+```bash
+python app/mirror_server.py
+```
+
+The web viewer is served at `http://localhost:8000` and will connect to the WebSocket server on port `8765`.
+
+## Run the mock mobile sender
+
+```bash
+python tools/mock_mobile.py --ws ws://localhost:8765/sender
+```
+
+Open `http://localhost:8000` in a browser to see the mirrored frames.
+
+## Next steps
+
+- Replace the mock sender with a real mobile capture pipeline.
+- Add authentication and encryption.
+- Introduce adaptive bitrate and frame pacing.
