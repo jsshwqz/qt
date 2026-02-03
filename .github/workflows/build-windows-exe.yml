@@ -4,6 +4,12 @@ on:
   push:
     branches: [ main ]
   workflow_dispatch:
+  schedule:
+    - cron: '0 3 * * *'
+
+concurrency:
+  group: build-windows-exe-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: write
