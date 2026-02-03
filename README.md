@@ -28,6 +28,16 @@ python app/mirror_server.py
 
 The web viewer is served at `http://localhost:8000` and will connect to the WebSocket server on port `8765`.
 
+## Desktop viewer (no browser)
+
+Use the desktop viewer to display frames without opening a browser window.
+
+```bash
+python app/desktop_viewer.py --viewer-ws ws://127.0.0.1:8765/viewer --control-ws ws://127.0.0.1:8765/control
+```
+
+Click on the window to send tap control messages through the `/control` WebSocket.
+
 ## Windows EXE build (no adb)
 
 The following creates a single-file Windows EXE that launches the server and opens the viewer page.

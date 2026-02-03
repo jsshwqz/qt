@@ -2,6 +2,7 @@
 import argparse
 import asyncio
 import io
+import json
 import time
 
 from PIL import Image, ImageDraw, ImageFont
@@ -24,11 +25,24 @@ async def stream(uri: str, fps: int, width: int, height: int):
     interval = 1.0 / fps
     counter = 0
     async with websockets.connect(uri, max_size=10 * 1024 * 1024) as websocket:
-        while True:
-            payload = make_frame(width, height, counter)
-            await websocket.send(payload)
-            await asyncio.sleep(interval)
-            counter += 1
+        async def _produce():
+            nonlocal counter
+            while True:
+                payload = make_frame(width, height, counter)
+                await websocket.send(payload)
+                await asyncio.sleep(interval)
+                counter += 1
+
+        async def _consume():
+            async for message in websocket:
+                if isinstance(message, str):
+                    try:
+                        payload = json.loads(message)
+                        print(f"Control received: {payload}")
+                    except json.JSONDecodeError:
+                        print(f"Control received (raw): {message}")
+
+        await asyncio.gather(_produce(), _consume())
 
 
 def parse_args():
