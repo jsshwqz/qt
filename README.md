@@ -16,6 +16,10 @@ This prototype provides a lightweight relay server and viewer for mirroring a mo
 pip install -r requirements.txt
 ```
 
+## Testing note
+
+If a change lists "Testing: 未运行（未要求）", it means no automated tests were executed for that change because none were requested.
+
 ## Run the mirror server
 
 ```bash
