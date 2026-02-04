@@ -6,7 +6,7 @@ import os
 import socketserver
 import threading
 import webbrowser
-from typing import Set
+from typing import Optional, Set
 
 from websockets.legacy.server import WebSocketServerProtocol, serve
 
@@ -45,25 +45,41 @@ async def stream_handler(
             viewers.discard(websocket)
         return
 
+    if path == "/control":
+        try:
+            async for message in websocket:
+                if not isinstance(message, str):
+                    continue
+                sender: Optional[WebSocketServerProtocol] = state.get("sender")
+                if sender and sender.open:
+                    await sender.send(message)
+        finally:
+            return
+
     if path != "/sender":
         await websocket.close(code=1008, reason="Unsupported path")
         return
 
-    async for message in websocket:
-        if not isinstance(message, (bytes, bytearray)):
-            continue
-        state["last_frame"] = message
-        if not viewers:
-            continue
-        await asyncio.gather(
-            *[viewer.send(message) for viewer in list(viewers) if viewer.open],
-            return_exceptions=True,
-        )
+    state["sender"] = websocket
+    try:
+        async for message in websocket:
+            if not isinstance(message, (bytes, bytearray)):
+                continue
+            state["last_frame"] = message
+            if not viewers:
+                continue
+            await asyncio.gather(
+                *[viewer.send(message) for viewer in list(viewers) if viewer.open],
+                return_exceptions=True,
+            )
+    finally:
+        if state.get("sender") is websocket:
+            state["sender"] = None
 
 
 async def start_ws_server(host: str, port: int):
     viewers: Set[WebSocketServerProtocol] = set()
-    state = {"last_frame": None}
+    state = {"last_frame": None, "sender": None}
     async with serve(
         lambda ws, path: stream_handler(ws, path, viewers, state),
         host,
