@@ -65,16 +65,27 @@ jobs:
       - name: Build EXE
         run: pyinstaller --onefile --name MirrorView app/launcher.py
 
+      - name: Generate checksum
+        run: |
+          $hash = (Get-FileHash -Path dist/MirrorView.exe -Algorithm SHA256).Hash
+          "$hash  MirrorView.exe" | Out-File -FilePath dist/MirrorView.exe.sha256 -Encoding ascii
+
       - name: Upload EXE artifact
         uses: actions/upload-artifact@v4
         with:
           name: MirrorView-windows
-          path: dist/MirrorView.exe
+          path: |
+            dist/MirrorView.exe
+            dist/MirrorView.exe.sha256
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: MirrorView-${{ github.run_number }}
-          name: MirrorView ${{ github.run_number }}
-          files: dist/MirrorView.exe
+          tag_name: MirrorView-latest
+          name: MirrorView (latest)
+          target_commitish: ${{ github.sha }}
+          files: |
+            dist/MirrorView.exe
+            dist/MirrorView.exe.sha256
           generate_release_notes: true
+          make_latest: true
