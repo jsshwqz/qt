@@ -38,7 +38,18 @@ async def stream(uri: str, fps: int, width: int, height: int):
                 if isinstance(message, str):
                     try:
                         payload = json.loads(message)
-                        print(f"Control received: {payload}")
+                        control_type = payload.get("type")
+                        if control_type == "tap":
+                            print(f"Control received: tap at ({payload.get('x')}, {payload.get('y')})")
+                        elif control_type == "swipe":
+                            print(
+                                "Control received: swipe from "
+                                f"({payload.get('x0')}, {payload.get('y0')}) to "
+                                f"({payload.get('x1')}, {payload.get('y1')}) "
+                                f"duration {payload.get('duration_ms')}ms"
+                            )
+                        else:
+                            print(f"Control received: {payload}")
                     except json.JSONDecodeError:
                         print(f"Control received (raw): {message}")
 

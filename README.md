@@ -16,9 +16,24 @@ This prototype provides a lightweight relay server and viewer for mirroring a mo
 pip install -r requirements.txt
 ```
 
-## Testing note
+## Testing
 
-If a change lists "Testing: 未运行（未要求）", it means no automated tests were executed for that change because none were requested.
+Install test dependencies and run the automated end-to-end test (stream + control) with:
+
+```bash
+pip install -r requirements.txt pytest
+pytest -q
+```
+
+The GitHub Actions workflow runs the same test suite on every push to `main`.
+
+## Testing requirement (global)
+
+Every code change must run the automated tests before committing. The expected command is:
+
+```bash
+pytest -q
+```
 
 ## Run the mirror server
 
@@ -37,6 +52,7 @@ python app/desktop_viewer.py --viewer-ws ws://127.0.0.1:8765/viewer --control-ws
 ```
 
 Click on the window to send tap control messages through the `/control` WebSocket.
+Click and drag to send swipe control messages (normalized coordinates and duration are sent).
 
 ## Windows EXE build (no adb)
 

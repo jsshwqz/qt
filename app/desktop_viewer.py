@@ -5,19 +5,12 @@ import io
 import json
 import queue
 import threading
+import time
 import tkinter as tk
-from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, Tuple
 
 from PIL import Image, ImageTk
 from websockets import connect
-
-
-@dataclass
-class ControlMessage:
-    type: str
-    x: float
-    y: float
 
 
 class ViewerClient:
@@ -56,8 +49,8 @@ class ViewerClient:
             except Exception:
                 await asyncio.sleep(1)
 
-    def send_control(self, message: ControlMessage):
-        payload = json.dumps(message.__dict__)
+    def send_control(self, message: dict):
+        payload = json.dumps(message)
 
         def _enqueue():
             self._control_queue.put_nowait(payload)
@@ -73,17 +66,47 @@ class DesktopViewerApp:
         self.label = tk.Label(root)
         self.label.pack(fill=tk.BOTH, expand=True)
         self._photo: Optional[ImageTk.PhotoImage] = None
-        self.label.bind("<Button-1>", self._on_click)
+        self._drag_start: Optional[Tuple[float, float]] = None
+        self._drag_started_at: Optional[float] = None
+        self.label.bind("<ButtonPress-1>", self._on_press)
+        self.label.bind("<ButtonRelease-1>", self._on_release)
         self.root.after(self.refresh_ms, self._poll_frames)
 
-    def _on_click(self, event):
-        if not self._photo:
-            return
+    def _normalize_position(self, event) -> Tuple[float, float]:
         width = self.label.winfo_width() or 1
         height = self.label.winfo_height() or 1
         x = max(0.0, min(1.0, event.x / width))
         y = max(0.0, min(1.0, event.y / height))
-        self.client.send_control(ControlMessage(type="tap", x=x, y=y))
+        return x, y
+
+    def _on_press(self, event):
+        if not self._photo:
+            return
+        self._drag_start = self._normalize_position(event)
+        self._drag_started_at = time.monotonic()
+
+    def _on_release(self, event):
+        if not self._photo or self._drag_start is None or self._drag_started_at is None:
+            return
+        x0, y0 = self._drag_start
+        x1, y1 = self._normalize_position(event)
+        distance = ((x1 - x0) ** 2 + (y1 - y0) ** 2) ** 0.5
+        duration_ms = int((time.monotonic() - self._drag_started_at) * 1000)
+        self._drag_start = None
+        self._drag_started_at = None
+        if distance < 0.02:
+            self.client.send_control({"type": "tap", "x": x1, "y": y1})
+        else:
+            self.client.send_control(
+                {
+                    "type": "swipe",
+                    "x0": x0,
+                    "y0": y0,
+                    "x1": x1,
+                    "y1": y1,
+                    "duration_ms": duration_ms,
+                }
+            )
 
     def _poll_frames(self):
         frame_data = None
