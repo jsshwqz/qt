@@ -5,6 +5,9 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: windows-latest
@@ -67,3 +70,11 @@ jobs:
         with:
           name: MirrorView-windows
           path: dist/MirrorView.exe
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: MirrorView-${{ github.run_number }}
+          name: MirrorView ${{ github.run_number }}
+          files: dist/MirrorView.exe
+          generate_release_notes: true

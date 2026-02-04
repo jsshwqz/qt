@@ -43,6 +43,8 @@ After packaging, the executable is located at `dist/MirrorView.exe`.
 
 The repository includes a GitHub Actions workflow that builds `MirrorView.exe` on Windows and uploads it as a workflow artifact.
 
+The workflow also publishes a GitHub Release containing `MirrorView.exe` automatically after each run.
+
 
 ## Run the mock mobile sender
 
