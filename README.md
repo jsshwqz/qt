@@ -39,6 +39,11 @@ pyinstaller --onefile --name MirrorView app/launcher.py
 
 After packaging, the executable is located at `dist/MirrorView.exe`.
 
+## GitHub Actions EXE build
+
+The repository includes a GitHub Actions workflow that builds `MirrorView.exe` on Windows and uploads it as a workflow artifact.
+
+
 ## Run the mock mobile sender
 
 ```bash
