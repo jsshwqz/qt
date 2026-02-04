@@ -4,6 +4,12 @@ on:
   push:
     branches: [ main ]
   workflow_dispatch:
+  schedule:
+    - cron: '0 3 * * *'
+
+concurrency:
+  group: build-windows-exe-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: write
@@ -11,9 +17,14 @@ permissions:
 jobs:
   build:
     runs-on: windows-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -80,10 +91,13 @@ jobs:
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: MirrorView-latest
           name: MirrorView (latest)
           target_commitish: ${{ github.sha }}
+          fail_on_unmatched_files: true
           files: |
             dist/MirrorView.exe
             dist/MirrorView.exe.sha256
