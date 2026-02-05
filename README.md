@@ -16,9 +16,16 @@ This prototype provides a lightweight relay server and viewer for mirroring a mo
 pip install -r requirements.txt
 ```
 
-## Testing note
+## Testing
 
-If a change lists "Testing: 未运行（未要求）", it means no automated tests were executed for that change because none were requested.
+Install test dependencies and run the automated end-to-end test (stream + control) with:
+
+```bash
+pip install -r requirements.txt pytest
+pytest -q
+```
+
+The GitHub Actions workflow runs the same test suite on every push to `main`.
 
 ## Run the mirror server
 
