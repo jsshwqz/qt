@@ -15,14 +15,22 @@ def parse_args():
 
 def main():
     args = parse_args()
-    asyncio.run(
-        mirror_server.run_server(
-            args.host,
-            args.http_port,
-            args.ws_port,
-            open_browser=True,
+    try:
+        asyncio.run(
+            mirror_server.run_server(
+                args.host,
+                args.http_port,
+                args.ws_port,
+                open_browser=True,
+            )
         )
-    )
+    except Exception as exc:
+        print("Failed to start mirror server:")
+        print(exc)
+        try:
+            input("Press Enter to exit...")
+        except EOFError:
+            pass
 
 
 if __name__ == "__main__":
