@@ -27,6 +27,14 @@ pytest -q
 
 The GitHub Actions workflow runs the same test suite on every push to `main`.
 
+## Testing requirement (global)
+
+Every code change must run the automated tests before committing. The expected command is:
+
+```bash
+pytest -q
+```
+
 ## Run the mirror server
 
 ```bash
