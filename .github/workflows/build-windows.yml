@@ -32,6 +32,17 @@ jobs:
         with:
           arch: x64
 
+      - name: Debug Source Snapshot
+        shell: powershell
+        run: |
+          git rev-parse HEAD
+          Write-Host "---- QtScrcpy/src/ui/mainwindow.h (first 80 lines) ----"
+          Get-Content "QtScrcpy/src/ui/mainwindow.h" | Select-Object -First 80
+          Write-Host "---- QtScrcpy/src/adb/devicemanager.h (first 60 lines) ----"
+          Get-Content "QtScrcpy/src/adb/devicemanager.h" | Select-Object -First 60
+          Write-Host "---- QtScrcpy/src/filetransfer/filetransfer.h (first 60 lines) ----"
+          Get-Content "QtScrcpy/src/filetransfer/filetransfer.h" | Select-Object -First 60
+
       - name: Configure CMake
         run: cmake -S QtScrcpy -B build -G "Ninja" -DCMAKE_BUILD_TYPE=Release
 
