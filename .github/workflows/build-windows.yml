@@ -9,6 +9,9 @@ on:
       - "QtScrcpy/**"
       - ".github/workflows/build-windows.yml"
 
+permissions:
+  contents: write
+
 jobs:
   build-windows:
     runs-on: windows-latest
@@ -97,9 +100,12 @@ jobs:
             release/QtScrcpy-win-x64.zip
             release/QtScrcpy-win-x64/**
 
-      - name: Publish asset to tagged release
+            - name: Publish asset to tagged release
         if: github.ref == 'refs/heads/main'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload v3.0.0-delivery-20260210 release/QtScrcpy-win-x64.zip --clobber
+          for ($i=0; $i -lt 3; $i++) {
+            gh release upload v3.0.0-delivery-20260210 release/QtScrcpy-win-x64.zip --clobber && break
+            Start-Sleep -Seconds 5
+          }
