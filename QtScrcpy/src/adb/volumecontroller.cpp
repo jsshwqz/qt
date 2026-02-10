@@ -39,7 +39,7 @@ void VolumeController::saveAndMute()
     m_savedVolumes[AudioStream::Alarm] = getVolume(AudioStream::Alarm);
     m_savedVolumes[AudioStream::System] = getVolume(AudioStream::System);
     
-    qDebug() << "Saved volumes:" << m_savedVolumes;
+    qDebug() << "Saved volume streams:" << m_savedVolumes.size();
     
     // 静音媒体音量（主要）
     setVolume(AudioStream::Music, 0);
@@ -59,7 +59,7 @@ void VolumeController::restore()
         setVolume(it.key(), it.value());
     }
     
-    qDebug() << "Restored volumes:" << m_savedVolumes;
+    qDebug() << "Restored volume streams:" << m_savedVolumes.size();
     
     m_savedVolumes.clear();
     m_isMuted = false;
