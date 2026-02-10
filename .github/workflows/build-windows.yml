@@ -32,6 +32,12 @@ jobs:
         with:
           arch: x64
 
+      - name: Ensure Build Uses Trigger SHA
+        shell: powershell
+        run: |
+          git checkout --force $env:GITHUB_SHA
+          git rev-parse HEAD
+
       - name: Debug Source Snapshot
         shell: powershell
         run: |
