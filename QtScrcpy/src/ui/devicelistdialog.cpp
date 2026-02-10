@@ -14,37 +14,32 @@
 DeviceListDialog::DeviceListDialog(QWidget *parent)
     : QDialog(parent)
 {
-    setWindowTitle("选择设备");
+    setWindowTitle("Device List");
     setMinimumSize(400, 300);
-    
+
     QVBoxLayout* layout = new QVBoxLayout(this);
-    
-    // 状态标签
-    m_statusLabel = new QLabel("已连接的设备：", this);
+
+    m_statusLabel = new QLabel("Connected devices:", this);
     layout->addWidget(m_statusLabel);
-    
-    // 设备列表
+
     m_listWidget = new QListWidget(this);
     layout->addWidget(m_listWidget);
-    
-    // 按钮
+
     QHBoxLayout* btnLayout = new QHBoxLayout();
-    
-    m_refreshBtn = new QPushButton("刷新", this);
+
+    m_refreshBtn = new QPushButton("Refresh", this);
     btnLayout->addWidget(m_refreshBtn);
-    
     btnLayout->addStretch();
-    
-    m_connectBtn = new QPushButton("连接", this);
+
+    m_connectBtn = new QPushButton("Connect", this);
     m_connectBtn->setDefault(true);
     btnLayout->addWidget(m_connectBtn);
-    
-    m_cancelBtn = new QPushButton("取消", this);
+
+    m_cancelBtn = new QPushButton("Cancel", this);
     btnLayout->addWidget(m_cancelBtn);
-    
+
     layout->addLayout(btnLayout);
-    
-    // 连接信号
+
     connect(m_listWidget, &QListWidget::itemDoubleClicked,
             this, &DeviceListDialog::onItemDoubleClicked);
     connect(m_refreshBtn, &QPushButton::clicked,
@@ -53,11 +48,10 @@ DeviceListDialog::DeviceListDialog(QWidget *parent)
             this, &DeviceListDialog::onConnectClicked);
     connect(m_cancelBtn, &QPushButton::clicked,
             this, &QDialog::reject);
-    
+
     connect(DeviceManager::instance(), &DeviceManager::devicesUpdated,
             this, &DeviceListDialog::onDevicesUpdated);
-    
-    // 初始化列表
+
     updateDeviceList();
 }
 
@@ -68,23 +62,21 @@ DeviceListDialog::~DeviceListDialog()
 void DeviceListDialog::updateDeviceList()
 {
     m_listWidget->clear();
-    
     QList<DeviceInfo> devices = DeviceManager::instance()->getDevices();
-    
+
     for (const DeviceInfo& info : devices) {
         QString text = info.model.isEmpty() ? info.serial : info.model;
-        
         if (info.isWireless) {
-            text += QString(" (无线 %1)").arg(info.ipAddress);
+            text += QString(" (Wi-Fi %1:%2)").arg(info.ipAddress).arg(info.port);
         } else {
             text += " (USB)";
         }
-        
+
         QListWidgetItem* item = new QListWidgetItem(text, m_listWidget);
         item->setData(Qt::UserRole, info.serial);
     }
-    
-    m_statusLabel->setText(QString("已连接 %1 个设备").arg(devices.size()));
+
+    m_statusLabel->setText(QString("Connected %1 device(s)").arg(devices.size()));
 }
 
 void DeviceListDialog::onDevicesUpdated()
@@ -111,3 +103,4 @@ void DeviceListDialog::onConnectClicked()
         accept();
     }
 }
+

@@ -15,19 +15,19 @@
 #include "ui/mainwindow.h"
 #include "adb/adbprocess.h"
 
-// 应用程序版本
+// 鎼存梻鏁ょ粙瀣碍閻楀牊婀?
 const char* APP_VERSION = "1.0.0";
 const char* APP_NAME = "QtScrcpy";
 
 /**
- * @brief 初始化应用程序样式
+ * @brief 閸掓繂顫愰崠鏍х安閻劎鈻兼惔蹇旂壉瀵?
  */
 void initializeStyle(QApplication& app)
 {
-    // 使用 Fusion 风格作为基础
+    // 娴ｈ法鏁?Fusion 妞嬪孩鐗告担婊€璐熼崺铏诡攨
     app.setStyle(QStyleFactory::create("Fusion"));
     
-    // 设置深色主题调色板
+    // 鐠佸墽鐤嗗ǎ杈娑撳顣界拫鍐閺?
     QPalette darkPalette;
     darkPalette.setColor(QPalette::Window, QColor(45, 45, 48));
     darkPalette.setColor(QPalette::WindowText, Qt::white);
@@ -45,7 +45,7 @@ void initializeStyle(QApplication& app)
     
     app.setPalette(darkPalette);
     
-    // 设置全局样式表
+    // 鐠佸墽鐤嗛崗銊ョ湰閺嶅嘲绱＄悰?
     app.setStyleSheet(R"(
         QToolTip {
             color: #ffffff;
@@ -176,14 +176,14 @@ void initializeStyle(QApplication& app)
 }
 
 /**
- * @brief 检查ADB是否存在
+ * @brief 濡偓閺岊檱DB閺勵垰鎯佺€涙ê婀?
  */
 bool checkAdbExists()
 {
     QString adbPath = QCoreApplication::applicationDirPath() + "/adb/adb.exe";
     
     if (!QFile::exists(adbPath)) {
-        // 尝试系统PATH中的adb
+        // 鐏忔繆鐦化鑽ょ埠PATH娑擃厾娈慳db
         #ifdef Q_OS_WIN
         adbPath = "adb.exe";
         #else
@@ -198,36 +198,38 @@ bool checkAdbExists()
 }
 
 /**
- * @brief 主函数
+ * @brief 娑撹鍤遍弫?
  */
 int main(int argc, char *argv[])
 {
-    // 启用高DPI缩放
+    // 閸氼垳鏁ゆ妤I缂傗晜鏂?
     QApplication::setHighDpiScaleFactorRoundingPolicy(
         Qt::HighDpiScaleFactorRoundingPolicy::PassThrough);
     
     QApplication app(argc, argv);
     
-    // 设置应用程序信息
+    // 鐠佸墽鐤嗘惔鏃傛暏缁嬪绨穱鈩冧紖
     app.setApplicationName(APP_NAME);
     app.setApplicationVersion(APP_VERSION);
     app.setOrganizationName("QtScrcpy");
     app.setOrganizationDomain("github.com/qtscrcpy");
     
-    // 初始化样式
+    // 閸掓繂顫愰崠鏍ㄧ壉瀵?
     initializeStyle(app);
     
-    // 检查ADB
+    // 濡偓閺岊檱DB
     if (!checkAdbExists()) {
-        QMessageBox::warning(nullptr, "警告", 
-            "未检测到ADB工具。\n\n"
-            "请确保以下任一条件满足：\n"
-            "1. adb目录下有adb.exe\n"
-            "2. ADB已添加到系统PATH环境变量\n\n"
-            "部分功能可能无法正常使用。");
+        QMessageBox::warning(
+            nullptr,
+            "Warning",
+            "ADB was not detected.\n\n"
+            "Please ensure one of the following:\n"
+            "1. `adb/adb.exe` exists next to the application.\n"
+            "2. ADB is available in system PATH.\n\n"
+            "Some features may not be available until ADB is configured.");
     }
     
-    // 创建主窗口
+    // 閸掓稑缂撴稉鑽ょ崶閸?
     MainWindow mainWindow;
     mainWindow.show();
     

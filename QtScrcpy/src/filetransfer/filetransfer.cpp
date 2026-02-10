@@ -32,7 +32,7 @@ void FileTransfer::pushFile(const QString& localPath, const QString& remotePath)
 {
     QFileInfo fileInfo(localPath);
     if (!fileInfo.exists()) {
-        emit transferCompleted(fileInfo.fileName(), false, "文件不存在");
+        emit transferCompleted(fileInfo.fileName(), false, "File does not exist");
         return;
     }
     
@@ -57,18 +57,18 @@ void FileTransfer::installApk(const QString& apkPath, bool reinstall)
     
     QFileInfo fileInfo(apkPath);
     if (!fileInfo.exists()) {
-        emit apkInstalled(fileInfo.fileName(), false, "APK文件不存在");
+        emit apkInstalled(fileInfo.fileName(), false, "APK file does not exist");
         return;
     }
     
     if (!isApkFile(apkPath)) {
-        emit apkInstalled(fileInfo.fileName(), false, "不是有效的APK文件");
+        emit apkInstalled(fileInfo.fileName(), false, "Not a valid APK file");
         return;
     }
     
     TransferTask task;
     task.localPath = apkPath;
-    task.remotePath = QString(); // APK安装不需要远程路径
+    task.remotePath = QString(); // APK闁诲海鎳撻ˇ鎶剿夋繝鍐枖鐎广儱顦版禒姗€鎮烽弴姘グ缂佺粯鐟х划娆戔偓锝庡幘閻斿懐鈧?
     task.isApk = true;
     task.fileSize = fileInfo.size();
     
@@ -149,20 +149,20 @@ void FileTransfer::onTransferFinished(const AdbProcess::AdbResult& result)
         
         if (success) {
             m_succeededCount++;
-            emit apkInstalled(fileName, true, "安装成功");
+            emit apkInstalled(fileName, true, "Install succeeded");
         } else {
             m_failedCount++;
-            QString errorMsg = "安装失败";
+            QString errorMsg = "闁诲海鎳撻ˇ鎶剿夋繝鍐ㄧ窞閺夊牜鍋夎";
             
-            // 解析错误信息
+            // 闁荤喐鐟辩徊楣冩倵娴犲鐓ユ繛鍡樺俯閸ゆ牕菐閸ワ絽澧插ù?
             if (result.output.contains("INSTALL_FAILED_ALREADY_EXISTS")) {
-                errorMsg = "应用已存在";
+                errorMsg = "App already installed";
             } else if (result.output.contains("INSTALL_FAILED_INSUFFICIENT_STORAGE")) {
-                errorMsg = "存储空间不足";
+                errorMsg = "Insufficient storage on device";
             } else if (result.output.contains("INSTALL_FAILED_INVALID_APK")) {
-                errorMsg = "无效的APK文件";
+                errorMsg = "Invalid APK file";
             } else if (result.output.contains("INSTALL_FAILED_VERSION_DOWNGRADE")) {
-                errorMsg = "版本降级被拒绝";
+                errorMsg = "Version downgrade is not allowed";
             } else if (!result.error.isEmpty()) {
                 errorMsg = result.error;
             }
@@ -172,14 +172,14 @@ void FileTransfer::onTransferFinished(const AdbProcess::AdbResult& result)
     } else {
         if (result.success) {
             m_succeededCount++;
-            emit transferCompleted(fileName, true, "传输成功");
+            emit transferCompleted(fileName, true, "Transfer succeeded");
         } else {
             m_failedCount++;
-            emit transferCompleted(fileName, false, result.error.isEmpty() ? "传输失败" : result.error);
+            emit transferCompleted(fileName, false, result.error.isEmpty() ? "Transfer failed" : result.error);
         }
     }
     
-    // 处理下一个任务
+    // 婵犮垼娉涚€氼噣骞冩繝鍐枖閻庯絺鏅濋鍗炩槈閹垮啩绨烽柟骞垮灲瀹?
     processNextTask();
 }
 

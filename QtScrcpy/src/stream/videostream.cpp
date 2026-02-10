@@ -10,7 +10,7 @@
 #include <QDebug>
 #include <QtEndian>
 
-// scrcpy协议常量
+// scrcpy鍗忚甯搁噺
 constexpr int DEVICE_NAME_LENGTH = 64;
 constexpr int DEVICE_INFO_SIZE = DEVICE_NAME_LENGTH + 4; // name + resolution
 
@@ -25,17 +25,17 @@ VideoStream::VideoStream(QObject *parent)
     , m_deviceInfoReceived(false)
     , m_waitingForHeader(true)
 {
-    // 将解码器移到独立线程
+    // 灏嗚В鐮佸櫒绉诲埌鐙珛绾跨▼
     m_decoder->moveToThread(m_decoderThread);
     m_decoderThread->start();
     
-    // 连接socket信号
+    // 杩炴帴socket淇″彿
     connect(m_socket, &QTcpSocket::connected, this, &VideoStream::onConnected);
     connect(m_socket, &QTcpSocket::disconnected, this, &VideoStream::onDisconnected);
     connect(m_socket, &QTcpSocket::readyRead, this, &VideoStream::onReadyRead);
     connect(m_socket, &QTcpSocket::errorOccurred, this, &VideoStream::onError);
     
-    // 连接解码器信号
+    // 杩炴帴瑙ｇ爜鍣ㄤ俊鍙?
     connect(m_decoder, &Decoder::frameReady, this, &VideoStream::frameReady);
 }
 
@@ -83,7 +83,7 @@ void VideoStream::onConnected()
 {
     qDebug() << "Video stream connected";
     
-    // 初始化解码器
+    // 鍒濆鍖栬В鐮佸櫒
     QMetaObject::invokeMethod(m_decoder, "init", Qt::QueuedConnection);
     
     emit connected();
@@ -101,14 +101,14 @@ void VideoStream::onReadyRead()
     m_buffer.append(data);
     m_bytesReceived += data.size();
     
-    // 首先解析设备信息
+    // 棣栧厛瑙ｆ瀽璁惧淇℃伅
     if (!m_deviceInfoReceived) {
         if (!parseDeviceInfo()) {
-            return; // 等待更多数据
+            return; // 绛夊緟鏇村鏁版嵁
         }
     }
     
-    // 处理视频数据
+    // 澶勭悊瑙嗛鏁版嵁
     processVideoData();
 }
 
@@ -118,16 +118,16 @@ bool VideoStream::parseDeviceInfo()
         return false;
     }
     
-    // 设备名称 (64 bytes, null-terminated)
+    // 璁惧鍚嶇О (64 bytes, null-terminated)
     m_deviceName = QString::fromUtf8(m_buffer.left(DEVICE_NAME_LENGTH)).trimmed();
     
-    // 分辨率 (4 bytes: 2 for width, 2 for height)
+    // 鍒嗚鲸鐜?(4 bytes: 2 for width, 2 for height)
     m_deviceWidth = qFromBigEndian<quint16>(
         reinterpret_cast<const uchar*>(m_buffer.constData() + DEVICE_NAME_LENGTH));
     m_deviceHeight = qFromBigEndian<quint16>(
         reinterpret_cast<const uchar*>(m_buffer.constData() + DEVICE_NAME_LENGTH + 2));
     
-    // 移除已处理的数据
+    // 绉婚櫎宸插鐞嗙殑鏁版嵁
     m_buffer.remove(0, DEVICE_INFO_SIZE);
     m_deviceInfoReceived = true;
     
@@ -141,16 +141,16 @@ bool VideoStream::parseDeviceInfo()
 
 void VideoStream::processVideoData()
 {
-    // scrcpy视频流格式：
-    // - 每个帧以 NAL 单元开始
-    // - 直接将数据传递给解码器
+    // scrcpy瑙嗛娴佹牸寮忥細
+    // - 姣忎釜甯т互 NAL 鍗曞厓寮€濮?
+    // - 鐩存帴灏嗘暟鎹紶閫掔粰瑙ｇ爜鍣?
     
     while (!m_buffer.isEmpty()) {
-        // 查找NAL单元起始码
+        // 鏌ユ壘NAL鍗曞厓璧峰鐮?
         int nalStart = -1;
         
         for (int i = 0; i < m_buffer.size() - 3; i++) {
-            // 检查 0x00 0x00 0x01 或 0x00 0x00 0x00 0x01
+            // 妫€鏌?0x00 0x00 0x01 鎴?0x00 0x00 0x00 0x01
             if (m_buffer[i] == 0x00 && m_buffer[i+1] == 0x00) {
                 if (m_buffer[i+2] == 0x01) {
                     nalStart = i;
@@ -164,11 +164,11 @@ void VideoStream::processVideoData()
         }
         
         if (nalStart == -1) {
-            // 没有找到完整的NAL单元，等待更多数据
+            // 娌℃湁鎵惧埌瀹屾暣鐨凬AL鍗曞厓锛岀瓑寰呮洿澶氭暟鎹?
             break;
         }
         
-        // 查找下一个NAL单元
+        // 鏌ユ壘涓嬩竴涓狽AL鍗曞厓
         int nextNalStart = -1;
         int startPos = nalStart + 3;
         if (nalStart < m_buffer.size() - 4 && 
@@ -193,8 +193,8 @@ void VideoStream::processVideoData()
         }
         
         if (nextNalStart == -1) {
-            // 这是最后一个NAL单元，检查缓冲区大小
-            // 如果缓冲区过大，可能是不完整的帧，发送到解码器
+            // 杩欐槸鏈€鍚庝竴涓狽AL鍗曞厓锛屾鏌ョ紦鍐插尯澶у皬
+            // 濡傛灉缂撳啿鍖鸿繃澶э紝鍙兘鏄笉瀹屾暣鐨勫抚锛屽彂閫佸埌瑙ｇ爜鍣?
             if (m_buffer.size() > 1024 * 1024) {
                 QByteArray nalUnit = m_buffer;
                 m_buffer.clear();
@@ -206,11 +206,11 @@ void VideoStream::processVideoData()
             break;
         }
         
-        // 提取NAL单元
+        // 鎻愬彇NAL鍗曞厓
         QByteArray nalUnit = m_buffer.mid(nalStart, nextNalStart - nalStart);
         m_buffer.remove(0, nextNalStart);
         
-        // 发送到解码器
+        // 鍙戦€佸埌瑙ｇ爜鍣?
         QMetaObject::invokeMethod(m_decoder, [this, nalUnit]() {
             m_decoder->decode(nalUnit);
         }, Qt::QueuedConnection);
@@ -222,16 +222,16 @@ void VideoStream::onError(QAbstractSocket::SocketError error)
     QString errorMsg;
     switch (error) {
         case QAbstractSocket::ConnectionRefusedError:
-            errorMsg = "连接被拒绝";
+            errorMsg = "Connection refused";
             break;
         case QAbstractSocket::HostNotFoundError:
-            errorMsg = "找不到主机";
+            errorMsg = "Host not found";
             break;
         case QAbstractSocket::SocketTimeoutError:
-            errorMsg = "连接超时";
+            errorMsg = "杩炴帴瓒呮椂";
             break;
         case QAbstractSocket::RemoteHostClosedError:
-            errorMsg = "远程主机关闭连接";
+            errorMsg = "杩滅▼涓绘満鍏抽棴杩炴帴";
             break;
         default:
             errorMsg = m_socket->errorString();

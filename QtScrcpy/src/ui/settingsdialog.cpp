@@ -12,15 +12,14 @@
 #include <QFormLayout>
 #include <QGroupBox>
 #include <QPushButton>
-#include <QLabel>
 #include <QSettings>
 
 SettingsDialog::SettingsDialog(QWidget *parent)
     : QDialog(parent)
 {
-    setWindowTitle("设置");
-    setMinimumWidth(400);
-    
+    setWindowTitle("Settings");
+    setMinimumWidth(420);
+
     setupUi();
     loadSettings();
 }
@@ -32,100 +31,95 @@ SettingsDialog::~SettingsDialog()
 void SettingsDialog::setupUi()
 {
     QVBoxLayout* mainLayout = new QVBoxLayout(this);
-    
-    // ===== 视频设置 =====
-    QGroupBox* videoGroup = new QGroupBox("视频设置", this);
+
+    QGroupBox* videoGroup = new QGroupBox("Video", this);
     QFormLayout* videoLayout = new QFormLayout(videoGroup);
-    
+
     m_maxSizeSpinBox = new QSpinBox(this);
     m_maxSizeSpinBox->setRange(0, 3840);
     m_maxSizeSpinBox->setSingleStep(120);
-    m_maxSizeSpinBox->setSpecialValueText("不限制");
+    m_maxSizeSpinBox->setSpecialValueText("No limit");
     m_maxSizeSpinBox->setSuffix(" px");
-    videoLayout->addRow("最大分辨率:", m_maxSizeSpinBox);
-    
+    videoLayout->addRow("Max size:", m_maxSizeSpinBox);
+
     m_bitRateSpinBox = new QSpinBox(this);
     m_bitRateSpinBox->setRange(1, 100);
     m_bitRateSpinBox->setSuffix(" Mbps");
-    videoLayout->addRow("比特率:", m_bitRateSpinBox);
-    
+    videoLayout->addRow("Bit rate:", m_bitRateSpinBox);
+
     m_maxFpsSpinBox = new QSpinBox(this);
     m_maxFpsSpinBox->setRange(1, 120);
     m_maxFpsSpinBox->setSuffix(" fps");
-    videoLayout->addRow("最大帧率:", m_maxFpsSpinBox);
-    
+    videoLayout->addRow("Max FPS:", m_maxFpsSpinBox);
+
     m_codecCombo = new QComboBox(this);
     m_codecCombo->addItem("H.264", "h264");
     m_codecCombo->addItem("H.265 (HEVC)", "h265");
     m_codecCombo->addItem("AV1", "av1");
-    videoLayout->addRow("视频编码:", m_codecCombo);
-    
+    videoLayout->addRow("Codec:", m_codecCombo);
+
     m_orientationCombo = new QComboBox(this);
-    m_orientationCombo->addItem("自动", -1);
-    m_orientationCombo->addItem("竖屏", 0);
-    m_orientationCombo->addItem("横屏 (顺时针90°)", 1);
-    m_orientationCombo->addItem("倒置", 2);
-    m_orientationCombo->addItem("横屏 (逆时针90°)", 3);
-    videoLayout->addRow("屏幕方向:", m_orientationCombo);
-    
+    m_orientationCombo->addItem("Unlocked", -1);
+    m_orientationCombo->addItem("Portrait", 0);
+    m_orientationCombo->addItem("Landscape (90)", 1);
+    m_orientationCombo->addItem("Portrait upside-down", 2);
+    m_orientationCombo->addItem("Landscape (270)", 3);
+    videoLayout->addRow("Orientation lock:", m_orientationCombo);
+
     mainLayout->addWidget(videoGroup);
-    
-    // ===== 控制设置 =====
-    QGroupBox* controlGroup = new QGroupBox("控制设置", this);
+
+    QGroupBox* controlGroup = new QGroupBox("Control", this);
     QVBoxLayout* controlLayout = new QVBoxLayout(controlGroup);
-    
-    m_stayAwakeCheck = new QCheckBox("保持屏幕唤醒", this);
+
+    m_stayAwakeCheck = new QCheckBox("Keep phone awake while connected", this);
     controlLayout->addWidget(m_stayAwakeCheck);
-    
-    m_showTouchesCheck = new QCheckBox("显示触摸点", this);
+
+    m_showTouchesCheck = new QCheckBox("Show touch points", this);
     controlLayout->addWidget(m_showTouchesCheck);
-    
-    m_clipboardSyncCheck = new QCheckBox("自动同步剪贴板", this);
+
+    m_clipboardSyncCheck = new QCheckBox("Auto sync clipboard", this);
     controlLayout->addWidget(m_clipboardSyncCheck);
-    
-    m_powerOnCheck = new QCheckBox("连接时点亮屏幕", this);
+
+    m_powerOnCheck = new QCheckBox("Turn screen on when connected", this);
     controlLayout->addWidget(m_powerOnCheck);
-    
-    m_powerOffOnCloseCheck = new QCheckBox("断开时关闭屏幕", this);
+
+    m_powerOffOnCloseCheck = new QCheckBox("Turn screen off when disconnected", this);
     controlLayout->addWidget(m_powerOffOnCloseCheck);
-    
-    m_muteOnConnectCheck = new QCheckBox("连接时静音手机（断开后恢复）", this);
+
+    m_muteOnConnectCheck = new QCheckBox("Mute phone audio while mirroring (restore on disconnect)", this);
     controlLayout->addWidget(m_muteOnConnectCheck);
-    
+
     mainLayout->addWidget(controlGroup);
-    
-    // ===== 按钮 =====
+
     QHBoxLayout* btnLayout = new QHBoxLayout();
-    
-    QPushButton* defaultsBtn = new QPushButton("恢复默认", this);
+
+    QPushButton* defaultsBtn = new QPushButton("Restore Defaults", this);
     connect(defaultsBtn, &QPushButton::clicked, this, &SettingsDialog::onRestoreDefaults);
     btnLayout->addWidget(defaultsBtn);
-    
     btnLayout->addStretch();
-    
-    QPushButton* applyBtn = new QPushButton("应用", this);
+
+    QPushButton* applyBtn = new QPushButton("Apply", this);
     connect(applyBtn, &QPushButton::clicked, this, &SettingsDialog::onApply);
     btnLayout->addWidget(applyBtn);
-    
-    QPushButton* okBtn = new QPushButton("确定", this);
+
+    QPushButton* okBtn = new QPushButton("OK", this);
     okBtn->setDefault(true);
     connect(okBtn, &QPushButton::clicked, this, [this]() {
         onApply();
         accept();
     });
     btnLayout->addWidget(okBtn);
-    
-    QPushButton* cancelBtn = new QPushButton("取消", this);
+
+    QPushButton* cancelBtn = new QPushButton("Cancel", this);
     connect(cancelBtn, &QPushButton::clicked, this, &QDialog::reject);
     btnLayout->addWidget(cancelBtn);
-    
+
     mainLayout->addLayout(btnLayout);
 }
 
 ServerConfig SettingsDialog::getConfig() const
 {
     ServerConfig config;
-    
     config.maxSize = m_maxSizeSpinBox->value();
     config.bitRate = m_bitRateSpinBox->value() * 1000000;
     config.maxFps = m_maxFpsSpinBox->value();
@@ -136,7 +130,6 @@ ServerConfig SettingsDialog::getConfig() const
     config.clipboardAutosync = m_clipboardSyncCheck->isChecked();
     config.powerOn = m_powerOnCheck->isChecked();
     config.powerOffOnClose = m_powerOffOnCloseCheck->isChecked();
-    
     return config;
 }
 
@@ -145,17 +138,17 @@ void SettingsDialog::setConfig(const ServerConfig& config)
     m_maxSizeSpinBox->setValue(config.maxSize);
     m_bitRateSpinBox->setValue(config.bitRate / 1000000);
     m_maxFpsSpinBox->setValue(config.maxFps);
-    
-    int codecIndex = m_codecCombo->findData(config.videoCodec);
+
+    const int codecIndex = m_codecCombo->findData(config.videoCodec);
     if (codecIndex >= 0) {
         m_codecCombo->setCurrentIndex(codecIndex);
     }
-    
-    int orientIndex = m_orientationCombo->findData(config.lockVideoOrientation);
+
+    const int orientIndex = m_orientationCombo->findData(config.lockVideoOrientation);
     if (orientIndex >= 0) {
         m_orientationCombo->setCurrentIndex(orientIndex);
     }
-    
+
     m_stayAwakeCheck->setChecked(config.stayAwake);
     m_showTouchesCheck->setChecked(config.showTouches);
     m_clipboardSyncCheck->setChecked(config.clipboardAutosync);
@@ -166,7 +159,7 @@ void SettingsDialog::setConfig(const ServerConfig& config)
 void SettingsDialog::loadSettings()
 {
     QSettings settings("QtScrcpy", "QtScrcpy");
-    
+
     ServerConfig config;
     config.maxSize = settings.value("video/maxSize", 0).toInt();
     config.bitRate = settings.value("video/bitRate", 8000000).toInt();
@@ -178,18 +171,16 @@ void SettingsDialog::loadSettings()
     config.clipboardAutosync = settings.value("control/clipboardSync", true).toBool();
     config.powerOn = settings.value("control/powerOn", true).toBool();
     config.powerOffOnClose = settings.value("control/powerOffOnClose", false).toBool();
-    
+
     setConfig(config);
-    
     m_muteOnConnectCheck->setChecked(settings.value("control/muteOnConnect", true).toBool());
 }
 
 void SettingsDialog::saveSettings()
 {
     QSettings settings("QtScrcpy", "QtScrcpy");
-    
-    ServerConfig config = getConfig();
-    
+    const ServerConfig config = getConfig();
+
     settings.setValue("video/maxSize", config.maxSize);
     settings.setValue("video/bitRate", config.bitRate);
     settings.setValue("video/maxFps", config.maxFps);
@@ -214,3 +205,4 @@ void SettingsDialog::onRestoreDefaults()
     setConfig(defaults);
     m_muteOnConnectCheck->setChecked(true);
 }
+
