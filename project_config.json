@@ -1,0 +1,23 @@
+{
+    "version": "2.0.0",
+    "modules": {
+        "scrcpy": {
+            "name": "USB Mirroring",
+            "enabled": true
+        },
+        "wifi_mirroring": {
+            "name": "WiFi Mirroring",
+            "enabled": true
+        }
+    },
+    "settings": {
+        "default_resolution": "720x1280",
+        "frame_rate": 30,
+        "bitrate": 8000000,
+        "adb_path": "adb.exe"
+    },
+    "logging": {
+        "level": "INFO",
+        "file": "scrcpy_enhanced.log"
+    }
+}

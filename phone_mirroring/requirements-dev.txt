@@ -1,0 +1,2 @@
+# Qt 异步事件循环集成
+dataclasses; python_version<"3.7"

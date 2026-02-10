@@ -1,0 +1,54 @@
+{
+  "video": {
+    "width": 1920,
+    "height": 1080,
+    "fps": 30,
+    "bitrate": 2000000,
+    "codec": "H264",
+    "quality": "high"
+  },
+  "audio": {
+    "enabled": true,
+    "bitrate": 128000,
+    "codec": "AAC",
+    "sample_rate": 44100,
+    "channels": 2
+  },
+  "network": {
+    "host": "0.0.0.0",
+    "port": 8080,
+    "max_connections": 10,
+    "buffer_size": 65536,
+    "timeout": 30,
+    "keepalive": true
+  },
+  "control": {
+    "enable_touch": true,
+    "enable_keyboard": true,
+    "enable_mouse": true,
+    "enable_clipboard": false,
+    "latency_threshold": 100
+  },
+  "enabled_protocols": [
+    "RTSP",
+    "ADB"
+  ],
+  "recording": {
+    "enabled": false,
+    "format": "mp4",
+    "output_dir": "./recordings"
+  },
+  "security": {
+    "require_password": false,
+    "password": "",
+    "allow_lan": true,
+    "ssl_cert": "",
+    "ssl_key": ""
+  },
+  "debug": {
+    "log_level": "INFO",
+    "log_file": "",
+    "stats_enabled": false,
+    "stats_interval": 5000
+  }
+}

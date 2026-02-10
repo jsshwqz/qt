@@ -1,0 +1,305 @@
+--------- beginning of main
+02-08 21:45:43.698    53    53 W migration/7: type=1400 audit(0.0:18010): avc: granted { setsched } for pid=53 scontext=u:r:kernel:s0 tcontext=u:r:kernel:s0 tclass=process
+02-08 21:45:43.698    47    47 W migration/6: type=1400 audit(0.0:18011): avc: granted { setsched } for pid=47 scontext=u:r:kernel:s0 tcontext=u:r:kernel:s0 tclass=process
+02-08 21:45:43.734    47    47 W migration/6: type=1400 audit(0.0:18012): avc: granted { setsched } for pid=47 scontext=u:r:kernel:s0 tcontext=u:r:kernel:s0 tclass=process
+02-08 21:45:43.734    53    53 W migration/7: type=1400 audit(0.0:18013): avc: granted { setsched } for pid=53 scontext=u:r:kernel:s0 tcontext=u:r:kernel:s0 tclass=process
+02-08 21:45:43.816 25395 25395 D skia    : HME hme_jpeg_dec version=JPEG_DEC_16.12.1, releasetime=12:06:23 May 10 2021
+02-08 21:45:43.816 25395 25395 D skia    : HME SkHmeDecFunction1 constructor ok
+02-08 21:45:43.816 25395 25395 D HiTraceC: entered HiTraceInit, Log Registered: 1
+02-08 21:45:43.817 25395 25395 D AndroidRuntime: >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+02-08 21:45:43.818 25395 25395 W app_process: type=1400 audit(0.0:18014): avc: denied { read } for pid=25395 name="u:object_r:device_config_runtime_native_boot_prop:s0" dev="tmpfs" ino=10036 scontext=u:r:shell:s0 tcontext=u:object_r:device_config_runtime_native_boot_prop:s0 tclass=file permissive=0
+02-08 21:45:43.820 25395 25395 I app_process: HwDexFileLoaderInit mt_dexfile_loader_fn_ hw_mc.art.mt_dex_loader=1
+02-08 21:45:43.820 25395 25395 I app_process: HwDexFileLoaderInit mt_dexfile_loader_fn_ g_numThreads=4
+02-08 21:45:43.820 25395 25395 W app_process: [MemLeak.JavaTrack]: failed to dlopen libmemleak_tracker.so
+02-08 21:45:43.820 25395 25395 E libc    : Access denied finding property "persist.device_config.runtime_native_boot.enable_apex_image"
+02-08 21:45:43.820 25395 25395 I AndroidRuntime: Using default boot image
+02-08 21:45:43.820 25395 25395 E libc    : Access denied finding property "persist.device_config.runtime_native_boot.disable_lock_profiling"
+02-08 21:45:43.820 25395 25395 I AndroidRuntime: Leaving lock profiling enabled
+02-08 21:45:43.821 25395 25395 E libc    : Access denied finding property "persist.device_config.runtime_native_boot.enable_generational_cc"
+02-08 21:45:43.822 25395 25395 I         : HwCustType is 0
+02-08 21:45:43.822 25395 25395 E         : open file error
+02-08 21:45:43.822 25395 25395 I         : no cota live update cust policy found
+02-08 21:45:43.822 25395 25395 I         : GetCfgDirRealPolicyValue: custPolicyDirs: /system/emui/base:/system/emui/china:/vendor/etc:/odm/cust/all/cn:/odm/etc:/odm/hw_odm/VOG-AL10:/hw_product/etc:/hw_product/region_comm/china:/preas/china:/hw_product/hw_oem/VOG-AL10:/preload/VOG-AL10/all/cn:/cust/global:/cust/hw/cn:/version/cust/all/cn:/hw_product/special_cust/VOG-AL10/all/cn:/version/special_cust/VOG-AL10/all/cn:/cust/cotalite:/cust/ecota
+02-08 21:45:43.823 25395 25395 I app_process: Opt gc perf enable = 1
+02-08 21:45:43.823 25395 25395 I app_process: ScopedPromotePriority logging = 0
+02-08 21:45:43.886 25395 25395 W app_process: DexFile /system/emui/base/jar/Mdm/hw_mdm_framework.jar is in boot class path but is not in a known location
+02-08 21:45:43.910 25395 25395 D ICU     : Time zone APEX file found: /apex/com.android.tzdata/etc/icu/icu_tzdata.dat
+02-08 21:45:43.917 25395 25395 W System  : ClassLoader referenced unknown path: /data/local/tmp/scrcpy-server.jar
+02-08 21:45:43.917 25395 25395 I app_process: Reinit property: dalvik.vm.checkjni= false
+02-08 21:45:43.917 25395 25395 I app_process: ReInitProperties: persist.vm.debug.dumpapi= false
+02-08 21:45:43.919 25395 25395 W app_process: Qarth read proc_cmdline fail.
+02-08 21:45:43.919 25395 25395 I app_process: Qarth function Enabled: 1
+02-08 21:45:43.920 25395 25395 E appproc : ERROR: could not find class 'com.genymobile.scrcpy.Server'
+02-08 21:45:43.920 25395 25395 F app_process: thread.cc:2560] No pending exception expected: java.lang.ClassNotFoundException: com.genymobile.scrcpy.Server
+02-08 21:45:43.920 25395 25395 F app_process: thread.cc:2560] (Throwable with empty stack trace)
+02-08 21:45:43.920 25395 25395 F app_process: thread.cc:2560] 
+02-08 21:45:43.953 25395 25395 F app_process: thread.cc:2560] No pending exception expected: java.lang.ClassNotFoundException: com.genymobile.scrcpy.Server
+02-08 21:45:43.953 25395 25395 F app_process: thread.cc:2560] (Throwable with empty stack trace)
+02-08 21:45:43.953 25395 25395 F app_process: thread.cc:2560] 
+02-08 21:45:43.974 25395 25395 F app_process: runtime.cc:659] Runtime aborting --- recursively, so no thread-specific detail!
+02-08 21:45:43.974 25395 25395 F app_process: runtime.cc:659] #00 pc 0000000000432130  /apex/com.android.runtime/lib64/libart.so (art::DumpNativeStack(std::__1::basic_ostream<char, std::__1::char_traits<char>>&, int, BacktraceMap*, char const*, art::ArtMethod*, void*, bool)+140)
+02-08 21:45:43.974 25395 25395 F app_process: runtime.cc:659] #01 pc 00000000004e342c  /apex/com.android.runtime/lib64/libart.so (art::Runtime::Abort(char const*)+1416)
+02-08 21:45:43.974 25395 25395 F app_process: runtime.cc:659] #02 pc 000000000000c600  /system/lib64/libbase.so (android::base::LogMessage::~LogMessage()+684)
+02-08 21:45:43.974 25395 25395 F app_process: runtime.cc:659] #03 pc 000000000052c8a0  /apex/com.android.runtime/lib64/libart.so (art::Thread::AssertNoPendingException() const+1176)
+02-08 21:45:43.974 25395 25395 F app_process: runtime.cc:659] #04 pc 000000000017a2b8  /apex/com.android.runtime/lib64/libart.so (art::ClassLinker::FindClass(art::Thread*, char const*, art::Handle<art::mirror::ClassLoader>)+64)
+02-08 21:45:43.974 25395 25395 F app_process: runtime.cc:659] #05 pc 00000000001674c4  /apex/com.android.runtime/lib64/libart.so (art::ClassLinker::DoResolveType(art::dex::TypeIndex, art::Handle<art::mirror::DexCache>, art::Handle<art::mirror::ClassLoader>)+184)
+02-08 21:45:43.974 25395 25395 F app_process: runtime.cc:659] #06 pc 0000000000557aec  /apex/com.android.runtime/lib64/libart.so (_ZN3art8verifier4impl12_GLOBAL__N_114MethodVerifierILb0EE6VerifyEv$09bf97eb2c0d684adb6d215f7005036e+1540)
+02-08 21:45:43.974 25395 25395 F app_process: runtime.cc:659] #07 pc 000000000055b648  /apex/com.android.runtime/lib64/libart.so (art::verifier::MethodVerifier::FindLocksAtDexPc(art::ArtMethod*, unsigned int, std::__1::vector<art::verifier::MethodVerifier::DexLockInfo, std::__1::allocator<art::verifier::MethodVerifier::DexLockInfo>>*, unsigned int)+644)
+02-08 21:45:43.974 25395 25395 F app_process: runtime.cc:659] #08 pc 000000000042e350  /apex/com.android.runtime/lib64/libart.so (art::Monitor::VisitLocks(art::StackVisitor*, void (*)(art::ObjPtr<art::mirror::Object>, void*), void*, bool)+828)
+02-08 21:45:43.974 25395 25395 F app_process: runtime.cc:659] #09 pc 000000000042f4cc  /apex/com.android.runtime/lib64/libart.so (art::MonitorObjectsStackVisitor::VisitFrame()+164)
+02-08 21:45:43.974 25395 25395 F app_process: runtime.cc:659] #10 pc 0000000000505960  /apex/com.android.runtime/lib64/libart.so (_ZN3art12StackVisitor9WalkStackILNS0_16CountTransitionsE0EEEvb+428)
+02-08 21:45:43.974 25395 25395 F app_process: runtime.cc:659] #11 pc 000000000052b59c  /apex/com.android.runtime/lib64/libart.so (art::Thread::DumpJavaStack(std::__1::basic_ostream<char, std::__1::char_traits<char>>&, bool, bool) const+448)
+02-08 21:45:43.974 25395 25395 F app_process: runtime.cc:659] #12 pc 00000000005272a0  /apex/com.android.runtime/lib64/libart.so (art::Thread::DumpStack(std::__1::basic_ostream<char, std::__1::char_traits<char>>&, bool, BacktraceMap*, bool) const+532)
+02-08 21:45:43.974 25395 25395 F app_process: runtime.cc:659] #13 pc 0000000000542454  /apex/com.android.runtime/lib64/libart.so (art::DumpCheckpoint::Run(art::Thread*)+844)
+02-08 21:45:43.974 25395 25395 F app_process: runtime.cc:659] #14 pc 000000000053b3bc  /apex/com.android.runtime/lib64/libart.so (art::ThreadList::RunCheckpoint(art::Closure*, art::Closure*)+1376)
+02-08 21:45:43.974 25395 25395 F app_process: runtime.cc:659] #15 pc 000000000053a218  /apex/com.android.runtime/lib64/libart.so (art::ThreadList::Dump(std::__1::basic_ostream<char, std::__1::char_traits<char>>&, bool)+500)
+02-08 21:45:43.974 25395 25395 F app_process: runtime.cc:659] #16 pc 00000000004e347c  /apex/com.android.runtime/lib64/libart.so (art::Runtime::Abort(char const*)+1496)
+02-08 21:45:43.974 25395 25395 F app_process: runtime.cc:659] #17 pc 000000000000c600  /system/lib64/libbase.so (android::base::LogMessage::~LogMessage()+684)
+02-08 21:45:43.974 25395 25395 F app_process: runtime.cc:659] #18 pc 000000000052c8a0  /apex/com.android.runtime/lib64/libart.so (art::Thread::AssertNoPendingException() const+1176)
+02-08 21:45:43.974 25395 25395 F app_process: runtime.cc:659] #19 pc 000000000017a2b8  /apex/com.android.runtime/lib64/libart.so (art::ClassLinker::FindClass(art::Thread*, char const*, art::Handle<art::mirror::ClassLoader>)+64)
+02-08 21:45:43.974 25395 25395 F app_process: runtime.cc:659] #20 pc 000000000039f804  /apex/com.android.runtime/lib64/libart.so (art::JNI::FindClass(_JNIEnv*, char const*)+1276)
+02-08 21:45:43.974 25395 25395 F app_process: runtime.cc:659] #21 pc 0000000000004040  /apex/com.android.runtime/lib64/libnativehelper.so (jniRegisterNativeMethods+44)
+02-08 21:45:43.974 25395 25395 F app_process: runtime.cc:659] #22 pc 000000000010208c  /system/lib64/libandroid_runtime.so (android::register_com_android_internal_os_RuntimeInit(_JNIEnv*)+124)
+02-08 21:45:43.974 25395 25395 F app_process: runtime.cc:659] #23 pc 0000000000105e30  /system/lib64/libandroid_runtime.so (android::AndroidRuntime::startReg(_JNIEnv*)+108)
+02-08 21:45:43.974 25395 25395 F app_process: runtime.cc:659] #24 pc 0000000000105af0  /system/lib64/libandroid_runtime.so (android::AndroidRuntime::start(char const*, android::Vector<android::String8> const&, bool)+904)
+02-08 21:45:43.974 25395 25395 F app_process: runtime.cc:659] #25 pc 00000000000034e0  /system/bin/app_process64 (main+1168)
+02-08 21:45:43.974 25395 25395 F app_process: runtime.cc:659] #26 pc 000000000006b108  /apex/com.android.runtime/lib64/bionic/libc.so (__libc_init+108)
+02-08 21:45:43.974 25395 25395 F app_process: runtime.cc:659] 
+02-08 21:45:43.974 25395 25395 F app_process: runtime.cc:668] No pending exception expected: java.lang.ClassNotFoundException: com.genymobile.scrcpy.Server
+02-08 21:45:43.974 25395 25395 F app_process: runtime.cc:668] (Throwable with empty stack trace)
+02-08 21:45:43.974 25395 25395 F app_process: runtime.cc:668] 
+02-08 21:45:43.974 25395 25395 F app_process: runtime.cc:668] 
+--------- beginning of crash
+02-08 21:45:43.974 25395 25395 F libc    : Fatal signal 6 (SIGABRT), code -1 (SI_QUEUE) in tid 25395 (main), pid 25395 (main)
+02-08 21:45:43.988  1557  2098 I TrafficMonitor: update:rxPkts:0,txPkts:1,rxBytes:0,txBytes:60
+02-08 21:45:43.988  1557  2098 I TrafficMonitor: gettimer:interval=2000
+02-08 21:45:44.010 25408 25408 I crash_dump64: obtaining output fd from tombstoned, type: kDebuggerdTombstone
+02-08 21:45:44.010  1104  1104 I /system/bin/tombstoned: received crash request for pid 25395
+02-08 21:45:44.011 25408 25408 I crash_dump64: performing dump of process 25395 (target tid = 25395)
+02-08 21:45:44.019 25408 25408 F DEBUG   : *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** ***
+02-08 21:45:44.019 25408 25408 F DEBUG   : Build fingerprint: 'HUAWEI/VOG-AL10/HWVOG:10/HUAWEIVOG-AL10/10.1.0.162C00:user/release-keys'
+02-08 21:45:44.019 25408 25408 F DEBUG   : Revision: '0'
+02-08 21:45:44.019 25408 25408 F DEBUG   : ABI: 'arm64'
+02-08 21:45:44.025 25408 25408 F DEBUG   : SYSVMTYPE: Maple
+02-08 21:45:44.025 25408 25408 F DEBUG   : APPVMTYPE: Art
+02-08 21:45:44.025 25408 25408 F DEBUG   : Timestamp: 2026-02-08 21:45:44+0800
+02-08 21:45:44.025 25408 25408 F DEBUG   : pid: 25395, tid: 25395, name: main  >>> app_process <<<
+02-08 21:45:44.025 25408 25408 F DEBUG   : uid: 2000
+02-08 21:45:44.025 25408 25408 F DEBUG   : signal 6 (SIGABRT), code -1 (SI_QUEUE), fault addr --------
+02-08 21:45:44.025 25408 25408 F DEBUG   : Abort message: 'No pending exception expected: java.lang.ClassNotFoundException: com.genymobile.scrcpy.Server
+02-08 21:45:44.025 25408 25408 F DEBUG   : (Throwable with empty stack trace)
+02-08 21:45:44.025 25408 25408 F DEBUG   : '
+02-08 21:45:44.025 25408 25408 F DEBUG   :     x0  0000000000000000  x1  0000000000006333  x2  0000000000000006  x3  0000007ffa60f760
+02-08 21:45:44.025 25408 25408 F DEBUG   :     x4  0000000000000000  x5  0000000000000000  x6  0000000000000000  x7  7f7f7f7f7f7f7f7f
+02-08 21:45:44.025 25408 25408 F DEBUG   :     x8  00000000000000f0  x9  df5a752db38cd45e  x10 0000000000000001  x11 0000000000000000
+02-08 21:45:44.025 25408 25408 F DEBUG   :     x12 fffffff0fffffbdf  x13 0000000000000020  x14 0000000000000004  x15 00000f876c554b28
+02-08 21:45:44.025 25408 25408 F DEBUG   :     x16 0000007235170a08  x17 00000072351507c0  x18 0000007236352000  x19 0000000000006333
+02-08 21:45:44.025 25408 25408 F DEBUG   :     x20 0000000000006333  x21 00000000ffffffff  x22 0000007197aa8b80  x23 00000071afa906a8
+02-08 21:45:44.025 25408 25408 F DEBUG   :     x24 00000071afa6e679  x25 00000071affe1000  x26 000000723563d258  x27 00000071affe1000
+02-08 21:45:44.025 25408 25408 F DEBUG   :     x28 000000000000000d  x29 0000007ffa60f800
+02-08 21:45:44.025 25408 25408 F DEBUG   :     sp  0000007ffa60f740  lr  0000007235105640  pc  000000723510566c
+02-08 21:45:44.045 25408 25408 F DEBUG   : 
+02-08 21:45:44.045 25408 25408 F DEBUG   : backtrace:
+02-08 21:45:44.045 25408 25408 F DEBUG   :       #00 pc 000000000007066c  /apex/com.android.runtime/lib64/bionic/libc.so (abort+160) (BuildId: b91c775ccc9b0556e91bc575a2511cd0)
+02-08 21:45:44.045 25408 25408 F DEBUG   :       #01 pc 00000000004e37a8  /apex/com.android.runtime/lib64/libart.so (art::Runtime::Abort(char const*)+2308) (BuildId: 0cc41d73c12e1e471060c8f6ba909e78)
+02-08 21:45:44.045 25408 25408 F DEBUG   :       #02 pc 000000000000c600  /system/lib64/libbase.so (android::base::LogMessage::~LogMessage()+684) (BuildId: 7e6f8e823512d07994e0f2250d7d708b)
+02-08 21:45:44.045 25408 25408 F DEBUG   :       #03 pc 000000000052c8a0  /apex/com.android.runtime/lib64/libart.so (art::Thread::AssertNoPendingException() const+1176) (BuildId: 0cc41d73c12e1e471060c8f6ba909e78)
+02-08 21:45:44.045 25408 25408 F DEBUG   :       #04 pc 000000000017a2b8  /apex/com.android.runtime/lib64/libart.so (art::ClassLinker::FindClass(art::Thread*, char const*, art::Handle<art::mirror::ClassLoader>)+64) (BuildId: 0cc41d73c12e1e471060c8f6ba909e78)
+02-08 21:45:44.045 25408 25408 F DEBUG   :       #05 pc 00000000001674c4  /apex/com.android.runtime/lib64/libart.so (art::ClassLinker::DoResolveType(art::dex::TypeIndex, art::Handle<art::mirror::DexCache>, art::Handle<art::mirror::ClassLoader>)+184) (BuildId: 0cc41d73c12e1e471060c8f6ba909e78)
+02-08 21:45:44.045 25408 25408 F DEBUG   :       #06 pc 0000000000557aec  /apex/com.android.runtime/lib64/libart.so (_ZN3art8verifier4impl12_GLOBAL__N_114MethodVerifierILb0EE6VerifyEv$09bf97eb2c0d684adb6d215f7005036e+1540) (BuildId: 0cc41d73c12e1e471060c8f6ba909e78)
+02-08 21:45:44.045 25408 25408 F DEBUG   :       #07 pc 000000000055b648  /apex/com.android.runtime/lib64/libart.so (art::verifier::MethodVerifier::FindLocksAtDexPc(art::ArtMethod*, unsigned int, std::__1::vector<art::verifier::MethodVerifier::DexLockInfo, std::__1::allocator<art::verifier::MethodVerifier::DexLockInfo>>*, unsigned int)+644) (BuildId: 0cc41d73c12e1e471060c8f6ba909e78)
+02-08 21:45:44.045 25408 25408 F DEBUG   :       #08 pc 000000000042e350  /apex/com.android.runtime/lib64/libart.so (art::Monitor::VisitLocks(art::StackVisitor*, void (*)(art::ObjPtr<art::mirror::Object>, void*), void*, bool)+828) (BuildId: 0cc41d73c12e1e471060c8f6ba909e78)
+02-08 21:45:44.045 25408 25408 F DEBUG   :       #09 pc 000000000042f4cc  /apex/com.android.runtime/lib64/libart.so (art::MonitorObjectsStackVisitor::VisitFrame()+164) (BuildId: 0cc41d73c12e1e471060c8f6ba909e78)
+02-08 21:45:44.045 25408 25408 F DEBUG   :       #10 pc 0000000000505960  /apex/com.android.runtime/lib64/libart.so (_ZN3art12StackVisitor9WalkStackILNS0_16CountTransitionsE0EEEvb+428) (BuildId: 0cc41d73c12e1e471060c8f6ba909e78)
+02-08 21:45:44.045 25408 25408 F DEBUG   :       #11 pc 000000000052b59c  /apex/com.android.runtime/lib64/libart.so (art::Thread::DumpJavaStack(std::__1::basic_ostream<char, std::__1::char_traits<char>>&, bool, bool) const+448) (BuildId: 0cc41d73c12e1e471060c8f6ba909e78)
+02-08 21:45:44.045 25408 25408 F DEBUG   :       #12 pc 00000000005272a0  /apex/com.android.runtime/lib64/libart.so (art::Thread::DumpStack(std::__1::basic_ostream<char, std::__1::char_traits<char>>&, bool, BacktraceMap*, bool) const+532) (BuildId: 0cc41d73c12e1e471060c8f6ba909e78)
+02-08 21:45:44.045 25408 25408 F DEBUG   :       #13 pc 0000000000542454  /apex/com.android.runtime/lib64/libart.so (art::DumpCheckpoint::Run(art::Thread*)+844) (BuildId: 0cc41d73c12e1e471060c8f6ba909e78)
+02-08 21:45:44.045 25408 25408 F DEBUG   :       #14 pc 000000000053b3bc  /apex/com.android.runtime/lib64/libart.so (art::ThreadList::RunCheckpoint(art::Closure*, art::Closure*)+1376) (BuildId: 0cc41d73c12e1e471060c8f6ba909e78)
+02-08 21:45:44.045 25408 25408 F DEBUG   :       #15 pc 000000000053a218  /apex/com.android.runtime/lib64/libart.so (art::ThreadList::Dump(std::__1::basic_ostream<char, std::__1::char_traits<char>>&, bool)+500) (BuildId: 0cc41d73c12e1e471060c8f6ba909e78)
+02-08 21:45:44.045 25408 25408 F DEBUG   :       #16 pc 00000000004e347c  /apex/com.android.runtime/lib64/libart.so (art::Runtime::Abort(char const*)+1496) (BuildId: 0cc41d73c12e1e471060c8f6ba909e78)
+02-08 21:45:44.045 25408 25408 F DEBUG   :       #17 pc 000000000000c600  /system/lib64/libbase.so (android::base::LogMessage::~LogMessage()+684) (BuildId: 7e6f8e823512d07994e0f2250d7d708b)
+02-08 21:45:44.045 25408 25408 F DEBUG   :       #18 pc 000000000052c8a0  /apex/com.android.runtime/lib64/libart.so (art::Thread::AssertNoPendingException() const+1176) (BuildId: 0cc41d73c12e1e471060c8f6ba909e78)
+02-08 21:45:44.045 25408 25408 F DEBUG   :       #19 pc 000000000017a2b8  /apex/com.android.runtime/lib64/libart.so (art::ClassLinker::FindClass(art::Thread*, char const*, art::Handle<art::mirror::ClassLoader>)+64) (BuildId: 0cc41d73c12e1e471060c8f6ba909e78)
+02-08 21:45:44.045 25408 25408 F DEBUG   :       #20 pc 000000000039f804  /apex/com.android.runtime/lib64/libart.so (art::JNI::FindClass(_JNIEnv*, char const*)+1276) (BuildId: 0cc41d73c12e1e471060c8f6ba909e78)
+02-08 21:45:44.045 25408 25408 F DEBUG   :       #21 pc 0000000000004040  /apex/com.android.runtime/lib64/libnativehelper.so (jniRegisterNativeMethods+44) (BuildId: 14f6796501cfc18bbfaf5dafee348e5d)
+02-08 21:45:44.045 25408 25408 F DEBUG   :       #22 pc 000000000010208c  /system/lib64/libandroid_runtime.so (android::register_com_android_internal_os_RuntimeInit(_JNIEnv*)+124) (BuildId: 4077d9d47e396a6c3d37d4fab9a2a047)
+02-08 21:45:44.045 25408 25408 F DEBUG   :       #23 pc 0000000000105e30  /system/lib64/libandroid_runtime.so (android::AndroidRuntime::startReg(_JNIEnv*)+108) (BuildId: 4077d9d47e396a6c3d37d4fab9a2a047)
+02-08 21:45:44.045 25408 25408 F DEBUG   :       #24 pc 0000000000105af0  /system/lib64/libandroid_runtime.so (android::AndroidRuntime::start(char const*, android::Vector<android::String8> const&, bool)+904) (BuildId: 4077d9d47e396a6c3d37d4fab9a2a047)
+02-08 21:45:44.045 25408 25408 F DEBUG   :       #25 pc 00000000000034e0  /system/bin/app_process64 (main+1168) (BuildId: e844be217eb39b34490d3798328d1f12)
+02-08 21:45:44.046 25408 25408 F DEBUG   :       #26 pc 000000000006b108  /apex/com.android.runtime/lib64/bionic/libc.so (__libc_init+108) (BuildId: b91c775ccc9b0556e91bc575a2511cd0)
+02-08 21:45:44.195 25408 25408 I crash_dump64: start log 25395 to faultlogger: No such file or directory
+02-08 21:45:44.197 25408 25408 D HiTraceC: entered HiTraceInit, Log Registered: 1
+02-08 21:45:44.201  1094 26760 E Parcel  : Reading a NULL string not supported here.
+02-08 21:45:44.201  1094 26760 I chatty  : uid=0(root) Binder:1094_3 identical 1 line
+02-08 21:45:44.201  1094 26760 E Parcel  : Reading a NULL string not supported here.
+--------- beginning of system
+02-08 21:45:44.202  1557  2343 W NativeCrashListener: Couldn't find ProcessRecord for pid 25395
+02-08 21:45:44.202 25408 25408 E crash_dump64: AM data write failed: Broken pipe
+02-08 21:45:44.206  1104  1104 E /system/bin/tombstoned: Tombstone written to: /data/tombstones/tombstone_00
+02-08 21:45:44.212  1557  1748 I BootReceiver: Copying /data/tombstones/tombstone_00 to DropBox (SYSTEM_TOMBSTONE)
+02-08 21:45:44.212  1557  1748 I DropBoxManagerService: add tag=SYSTEM_TOMBSTONE isTagEnabled=true flags=0x2
+02-08 21:45:44.231  1557  1734 W BroadcastQueue: Permission Denial: receiving Intent { act=android.intent.action.DROPBOX_ENTRY_ADDED flg=0x10 (has extras) } to ProcessRecord{2b62a5d 3025:com.google.android.gms.persistent/u0a199} (pid=3025, uid=10199) requires android.permission.READ_LOGS due to sender android (uid 1000)
+02-08 21:45:44.231  1557  1734 W BroadcastQueue: Permission Denial: receiving Intent { act=android.intent.action.DROPBOX_ENTRY_ADDED flg=0x10 (has extras) } to com.google.android.gms/.stats.service.DropBoxEntryAddedReceiver requires android.permission.READ_LOGS due to sender android (uid 1000)
+02-08 21:45:44.231  1557  1734 V BroadcastQueue: Finished with ordered broadcast BroadcastRecord{30ee368 u0 android.intent.action.DROPBOX_ENTRY_ADDED}
+02-08 21:45:44.487  1557  2686 D HwConnectivityServiceEx: set 1000 wlan0 value false
+02-08 21:45:44.489  2642  2866 W NetworkDualChannelCtrl: get booster para failed
+02-08 21:45:44.547  1557  2099 I WificondControl: Noise: -89, Snr: 40, Chload: 33, rssi: -52, txBitrate: 866, rxBitrate: 468, frequency: 5745, UlDelay: -1, currentTxBytes: 31938579, currentTxPackets: 202009, currentTxFailed: 1, currentRxBytes: 433772078, currentRxPackets: 360694
+02-08 21:45:44.550  1557  2099 V HwWifiServiceFactory: get AllImpl object = com.android.server.wifi.HwWifiServiceFactoryImpl@27805a7
+02-08 21:45:44.576   675 20165 I netd    : trafficSwapActiveStatsMap() <13.60ms>
+02-08 21:45:44.685 21514 21529 I bms_behavior: monitor interval count 180
+02-08 21:45:45.116   757   757 D AudioPolicyService: getUidState(10090) cacheIter->second.first, return cacheIter->second.second(9)
+02-08 21:45:45.117   757   757 D AudioPolicyService: getUidState(10090) !cacheIter->second.first, return PROCESS_STATE_UNKNOWN
+02-08 21:45:45.133  1557  2047 I ActivityManager: sendIntentSender target:PendingIntentRecord{2bd9371 com.google.android.gms broadcastIntent}, intent:flg=0x4 hwFlg=0x810
+02-08 21:45:45.135  1557  2047 D PGGoogleServicePolicy: worksource has gms, prevent hold partial wakelock
+02-08 21:45:45.146  1557  2686 V BroadcastQueue: Finished with ordered broadcast BroadcastRecord{31f3efc u0 com.google.android.gms.gcm.ACTION_CHECK_QUEUE}
+02-08 21:45:45.151  1557  2695 D PGGoogleServicePolicy: prevent gms/gsf hold partial wakelock
+02-08 21:45:45.174  1557  2686 D PGGoogleServicePolicy: prevent gms/gsf hold partial wakelock
+02-08 21:45:45.184  3025  3025 D BoundBrokerSvc: onRebind: Intent { act=com.google.android.gms.scheduler.standalone.housekeeping.HousekeepingTrainTaskService.ACTION_TASK_READY dat=chimera-action: cmp=com.google.android.gms/.chimera.PersistentInternalBoundBrokerService }
+02-08 21:45:45.185  3025 25011 I NetworkScheduler.Stats: (REDACTED) Task %s/%s started execution. cause:%s exec_start_elapsed_seconds: %s
+02-08 21:45:45.186  1557  2686 D PGGoogleServicePolicy: prevent gms/gsf hold partial wakelock
+02-08 21:45:45.187  3025 25204 I NetworkScheduler.Stats: (REDACTED) Task %s/%s started execution. cause:%s exec_start_elapsed_seconds: %s
+02-08 21:45:45.187  1557  2695 D HwConnectivityServiceEx: set 10199 wlan0 value false
+02-08 21:45:45.188  1557  2695 I ConnectivityService: HAware B uid 10199 pid 3025
+02-08 21:45:45.188  1557  2695 I ConnectivityService: B uid 10199
+02-08 21:45:45.188  3025 25011 W HKTTrainService: Constraint is not met for com.google.android.gms/.auth.account.be.legacy.AuthCronService{u=10 tag="buffered_logs_update" trigger=cadence{type=2} requirements=[NET_UNMETERED] attributes=[PERSISTED,HOUSEKEEPING] scheduled=-16449996s last_run=-2205186s exec_window_multiplier=1.0000 jid=N/A status=PENDING retries=0 client_lib=GMS_TASK_SCHEDULER-252932000} [CONTEXT service_id=218 ]
+02-08 21:45:45.189  1557  2695 I ConnectivityService: HAware B uid 10199 pid 3025
+02-08 21:45:45.189  1557  2695 I ConnectivityService: B uid 10199
+02-08 21:45:45.189  1557  2335 I ConnectivityService: HAware B uid 10199 pid 3025
+02-08 21:45:45.189  3025 25204 W HKTTrainService: Constraint is not met for com.google.android.gms/.smartdevice.logging.CleanBufferedLogsService{u=10 tag="upload_buffered_logs_periodic" trigger=cadence{type=0} requirements=[NET_UNMETERED] attributes=[PERSISTED,HOUSEKEEPING] scheduled=-16449965s last_run=-2112949s exec_window_multiplier=1.0000 jid=N/A status=PENDING retries=0 client_lib=GMS_TASK_SCHEDULER-252932000} [CONTEXT service_id=218 ]
+02-08 21:45:45.189  1557  2335 I ConnectivityService: B uid 10199
+02-08 21:45:45.190  3025 25011 W HKTTrainService: Constraint is not met for com.google.android.gms/.auth.account.be.legacy.AuthCronService{u=0 tag="buffered_logs_update" trigger=cadence{type=2} requirements=[NET_UNMETERED] attributes=[PERSISTED,HOUSEKEEPING] scheduled=-21898789s last_run=-2205186s exec_window_multiplier=1.0000 jid=N/A status=PENDING retries=0 client_lib=GMS_TASK_SCHEDULER-251933000} [CONTEXT service_id=218 ]
+02-08 21:45:45.190  1557  2686 I ConnectivityService: HAware B uid 10199 pid 3025
+02-08 21:45:45.190  1557  2686 I ConnectivityService: B uid 10199
+02-08 21:45:45.190  3025 25204 W HKTTrainService: Constraint is not met for com.google.android.gms/.semanticlocationhistory.pulp.PulpMddMaintenanceService{u=10 tag="PulpMddMaintenanceTask" trigger=cadence{type=0} requirements=[NET_UNMETERED] attributes=[PERSISTED,HOUSEKEEPING] scheduled=-16449965s last_run=-2112949s exec_window_multiplier=1.0000 jid=N/A status=PENDING retries=0 client_lib=GMS_TASK_SCHEDULER-252932000} [CONTEXT service_id=218 ]
+02-08 21:45:45.191  1557  2686 I ConnectivityService: HAware B uid 10199 pid 3025
+02-08 21:45:45.191  1557  2686 I ConnectivityService: B uid 10199
+02-08 21:45:45.191  3025 25204 W HKTTrainService: Constraint is not met for com.google.android.gms/.semanticlocationhistory.pulp.PulpMddDownloadScheduleService{u=10 tag="PulpMddRefreshDownloadTask" trigger=cadence{type=0} requirements=[NET_UNMETERED] attributes=[PERSISTED,HOUSEKEEPING] scheduled=-16449965s last_run=-2112949s exec_window_multiplier=1.0000 jid=N/A status=PENDING retries=0 client_lib=GMS_TASK_SCHEDULER-252932000} [CONTEXT service_id=218 ]
+02-08 21:45:45.191  1557  2686 I ConnectivityService: HAware B uid 10199 pid 3025
+02-08 21:45:45.191  1557  2686 I ConnectivityService: B uid 10199
+02-08 21:45:45.191  3025 25204 W HKTTrainService: Constraint is not met for com.google.android.gms/.smartdevice.logging.CleanBufferedLogsService{u=0 tag="upload_buffered_logs_periodic" trigger=cadence{type=0} requirements=[NET_UNMETERED] attributes=[PERSISTED,HOUSEKEEPING] scheduled=-21897354s last_run=-2112949s exec_window_multiplier=1.0000 jid=N/A status=PENDING retries=0 client_lib=GMS_TASK_SCHEDULER-251933000} [CONTEXT service_id=218 ]
+02-08 21:45:45.192  1557  2695 I ConnectivityService: HAware B uid 10199 pid 3025
+02-08 21:45:45.192  1557  2695 I ConnectivityService: B uid 10199
+02-08 21:45:45.192  3025 25204 W HKTTrainService: Constraint is not met for com.google.android.gms/.semanticlocationhistory.pulp.PulpMddMaintenanceService{u=0 tag="PulpMddMaintenanceTask" trigger=cadence{type=0} requirements=[NET_UNMETERED] attributes=[PERSISTED,HOUSEKEEPING] scheduled=-21897353s last_run=-2112949s exec_window_multiplier=1.0000 jid=N/A status=PENDING retries=0 client_lib=GMS_TASK_SCHEDULER-251933000} [CONTEXT service_id=218 ]
+02-08 21:45:45.193  1557  2695 I ConnectivityService: HAware B uid 10199 pid 3025
+02-08 21:45:45.193  1557  2695 I ConnectivityService: B uid 10199
+02-08 21:45:45.193  1557  2686 D PGGoogleServicePolicy: prevent gms/gsf hold partial wakelock
+02-08 21:45:45.193  3025 25204 W HKTTrainService: Constraint is not met for com.google.android.gms/.semanticlocationhistory.pulp.PulpMddDownloadScheduleService{u=0 tag="PulpMddRefreshDownloadTask" trigger=cadence{type=0} requirements=[NET_UNMETERED] attributes=[PERSISTED,HOUSEKEEPING] scheduled=-21897353s last_run=-2112949s exec_window_multiplier=1.0000 jid=N/A status=PENDING retries=0 client_lib=GMS_TASK_SCHEDULER-251933000} [CONTEXT service_id=218 ]
+02-08 21:45:45.194  3025 25377 I NetworkScheduler.Stats: (REDACTED) Task %s/%s finished executing. cause:%s result: %s elapsed_millis: %s uptime_millis: %s exec_start_elapsed_seconds: %s
+02-08 21:45:45.197  3025  3025 D BoundBrokerSvc: onUnbind: Intent { act=com.google.android.gms.scheduler.standalone.housekeeping.HousekeepingTrainTaskService.ACTION_TASK_READY dat=chimera-action: cmp=com.google.android.gms/.chimera.PersistentInternalBoundBrokerService }
+02-08 21:45:45.205  1557  2695 D SmartHeartBeat: isPendingAlarm, false, pkg:com.android.deskclock, action:com.android.deskclock.ALARM_ALERT,not pending alarm with AlarmClockInfo
+02-08 21:45:45.209  1557  2695 D PGGoogleServicePolicy: prevent gms/gsf hold partial wakelock
+02-08 21:45:45.213  1557  2686 D SmartHeartBeat: isPendingAlarm, false, pkg:com.android.deskclock, action:com.android.deskclock.ALARM_ALERT,not pending alarm with AlarmClockInfo
+02-08 21:45:45.231  1557  2686 D PGGoogleServicePolicy: prevent gms/gsf hold partial wakelock
+02-08 21:45:45.233  3025 25377 I NetworkScheduler.Stats: (REDACTED) Task %s/%s finished executing. cause:%s result: %s elapsed_millis: %s uptime_millis: %s exec_start_elapsed_seconds: %s
+02-08 21:45:45.237  3025  3025 D BoundBrokerSvc: onRebind: Intent { act=com.google.android.gms.scheduler.standalone.housekeeping.HousekeepingTrainTaskService.ACTION_TASK_READY dat=chimera-action: cmp=com.google.android.gms/.chimera.PersistentInternalBoundBrokerService }
+02-08 21:45:45.240  1557  2686 I ConnectivityService: HAware B uid 10199 pid 3025
+02-08 21:45:45.240  1557  2686 I ConnectivityService: B uid 10199
+02-08 21:45:45.241  3025 25350 W HKTTrainService: Constraint is not met for com.google.android.gms/.backup.transport.scheduling.RequireWifiAndChargingBackupTask{u=10 tag="require_wifi_but_not_idle_backup_task" trigger=cadence{type=4} requirements=[NET_UNMETERED,CHARGING] attributes=[PERSISTED,HOUSEKEEPING] scheduled=-21768269s last_run=-2111650s exec_window_multiplier=1.0000 jid=N/A status=PENDING retries=0 client_lib=GMS_TASK_SCHEDULER-251933000} [CONTEXT service_id=218 ]
+02-08 21:45:45.241  1557  2695 I ConnectivityService: HAware B uid 10199 pid 3025
+02-08 21:45:45.242  1557  2695 I ConnectivityService: B uid 10199
+02-08 21:45:45.242  3025 25377 I NetworkScheduler.Stats: (REDACTED) Task %s/%s started execution. cause:%s exec_start_elapsed_seconds: %s
+02-08 21:45:45.242  3025 25350 W HKTTrainService: Constraint is not met for com.google.android.gms/.backup.transport.scheduling.RequireWifiAndChargingBackupTask{u=0 tag="require_wifi_but_not_idle_backup_task" trigger=cadence{type=4} requirements=[NET_UNMETERED,CHARGING] attributes=[PERSISTED,HOUSEKEEPING] scheduled=-21897358s last_run=-2111650s exec_window_multiplier=1.0000 jid=N/A status=PENDING retries=0 client_lib=GMS_TASK_SCHEDULER-251933000} [CONTEXT service_id=218 ]
+02-08 21:45:45.242  1557  2695 D PGGoogleServicePolicy: prevent gms/gsf hold partial wakelock
+02-08 21:45:45.247  1557  2695 D SmartHeartBeat: isPendingAlarm, false, pkg:com.android.deskclock, action:com.android.deskclock.ALARM_ALERT,not pending alarm with AlarmClockInfo
+02-08 21:45:45.267  1557  2695 D PGGoogleServicePolicy: prevent gms/gsf hold partial wakelock
+02-08 21:45:45.270  3025 25377 I NetworkScheduler.Stats: (REDACTED) Task %s/%s started execution. cause:%s exec_start_elapsed_seconds: %s
+02-08 21:45:45.271  1557  2695 I ConnectivityService: HAware B uid 10199 pid 3025
+02-08 21:45:45.271  1557  2695 I ConnectivityService: B uid 10199
+02-08 21:45:45.272  3025 25204 W HKTTrainService: Constraint is not met for com.google.android.gms/.icing.service.IcingGcmTaskService{u=0 tag="Maintenance.BatchDownload.24h" trigger=cadence{type=0} requirements=[NET_UNMETERED,CHARGING] attributes=[PERSISTED,HOUSEKEEPING] scheduled=-16449991s last_run=-2112942s exec_window_multiplier=1.0000 jid=N/A status=PENDING retries=0 client_lib=GMS_TASK_SCHEDULER-252932000} [CONTEXT service_id=218 ]
+02-08 21:45:45.273  1557  2686 I ConnectivityService: HAware B uid 10199 pid 3025
+02-08 21:45:45.273  1557  2686 I ConnectivityService: B uid 10199
+02-08 21:45:45.273  1557  2695 D PGGoogleServicePolicy: prevent gms/gsf hold partial wakelock
+02-08 21:45:45.273  3025 25204 W HKTTrainService: Constraint is not met for com.google.android.gms/.semanticlocationhistory.monitoring.MonitoringService{u=10 tag="MonitoringService" trigger=cadence{type=0} requirements=[NET_UNMETERED,CHARGING] attributes=[PERSISTED,HOUSEKEEPING] scheduled=-16449966s last_run=-2112942s exec_window_multiplier=1.0000 jid=N/A status=PENDING retries=0 client_lib=GMS_TASK_SCHEDULER-252932000} [CONTEXT service_id=218 ]
+02-08 21:45:45.274  3025 25377 I NetworkScheduler.Stats: (REDACTED) Task %s/%s finished executing. cause:%s result: %s elapsed_millis: %s uptime_millis: %s exec_start_elapsed_seconds: %s
+02-08 21:45:45.274  1557  2686 I ConnectivityService: HAware B uid 10199 pid 3025
+02-08 21:45:45.274  1557  2686 I ConnectivityService: B uid 10199
+02-08 21:45:45.275  3025 25204 W HKTTrainService: Constraint is not met for com.google.android.gms/.backup.transport.component.CustomBackupNewScheduleLoggingTask{u=10 tag="custom_backup_schedule_logging" trigger=cadence{type=0} requirements=[NET_UNMETERED,CHARGING] attributes=[PERSISTED,HOUSEKEEPING] scheduled=-16449997s last_run=-2112942s exec_window_multiplier=1.0000 jid=N/A status=PENDING retries=0 client_lib=GMS_TASK_SCHEDULER-252932000} [CONTEXT service_id=218 ]
+02-08 21:45:45.276  1557  2686 I ConnectivityService: HAware B uid 10199 pid 3025
+02-08 21:45:45.276  1557  2686 I ConnectivityService: B uid 10199
+02-08 21:45:45.276  3025 25204 W HKTTrainService: Constraint is not met for com.google.android.gms/.fonts.update.UpdateSchedulerService{u=10 tag="FontsUpdateCheck" trigger=cadence{type=0} requirements=[NET_UNMETERED,CHARGING] attributes=[PERSISTED,HOUSEKEEPING] scheduled=-21898668s last_run=-2112942s exec_window_multiplier=1.0000 jid=N/A status=PENDING retries=0 client_lib=GMS_TASK_SCHEDULER-251933000} [CONTEXT service_id=218 ]
+02-08 21:45:45.277  1557  2686 I ConnectivityService: HAware B uid 10199 pid 3025
+02-08 21:45:45.277  1557  2686 I ConnectivityService: B uid 10199
+02-08 21:45:45.277  3025 25204 W HKTTrainService: Constraint is not met for com.google.android.gms/.semanticlocationhistory.monitoring.MonitoringService{u=0 tag="MonitoringService" trigger=cadence{type=0} requirements=[NET_UNMETERED,CHARGING] attributes=[PERSISTED,HOUSEKEEPING] scheduled=-21897355s last_run=-2112942s exec_window_multiplier=1.0000 jid=N/A status=PENDING retries=0 client_lib=GMS_TASK_SCHEDULER-251933000} [CONTEXT service_id=218 ]
+02-08 21:45:45.278  1557  2686 I ConnectivityService: HAware B uid 10199 pid 3025
+02-08 21:45:45.278  1557  2686 I ConnectivityService: B uid 10199
+02-08 21:45:45.278  3025 25204 W HKTTrainService: Constraint is not met for com.google.android.gms/.backup.transport.component.CustomBackupNewScheduleLoggingTask{u=0 tag="custom_backup_schedule_logging" trigger=cadence{type=0} requirements=[NET_UNMETERED,CHARGING] attributes=[PERSISTED,HOUSEKEEPING] scheduled=-21897358s last_run=-2112942s exec_window_multiplier=1.0000 jid=N/A status=PENDING retries=0 client_lib=GMS_TASK_SCHEDULER-251933000} [CONTEXT service_id=218 ]
+02-08 21:45:45.281  1557  2695 D PGGoogleServicePolicy: prevent gms/gsf hold partial wakelock
+02-08 21:45:45.286  1557  2695 D SmartHeartBeat: isPendingAlarm, false, pkg:com.android.deskclock, action:com.android.deskclock.ALARM_ALERT,not pending alarm with AlarmClockInfo
+02-08 21:45:45.305  1557  2686 D PGGoogleServicePolicy: prevent gms/gsf hold partial wakelock
+02-08 21:45:45.306  3025 25350 I NetworkScheduler.Stats: (REDACTED) Task %s/%s started execution. cause:%s exec_start_elapsed_seconds: %s
+02-08 21:45:45.309  1557  2695 I ConnectivityService: HAware B uid 10199 pid 3025
+02-08 21:45:45.309  1557  2695 I ConnectivityService: B uid 10199
+02-08 21:45:45.310  3025 25350 W HKTTrainService: Constraint is not met for com.google.android.gms/.semanticlocation.mdd.MddDownloadScheduleService{u=10 tag="schedule_mdd_task" trigger=cadence{type=4} requirements=[NET_CONNECTED] attributes=[PERSISTED,HOUSEKEEPING] scheduled=-16449965s last_run=-24773s exec_window_multiplier=1.0000 jid=N/A status=PENDING retries=0 client_lib=GMS_TASK_SCHEDULER-252932000} [CONTEXT service_id=218 ]
+02-08 21:45:45.310  1557  2686 D PGGoogleServicePolicy: prevent gms/gsf hold partial wakelock
+02-08 21:45:45.311  3025 25377 I NetworkScheduler.Stats: (REDACTED) Task %s/%s finished executing. cause:%s result: %s elapsed_millis: %s uptime_millis: %s exec_start_elapsed_seconds: %s
+02-08 21:45:45.311  1557  2695 I ConnectivityService: HAware B uid 10199 pid 3025
+02-08 21:45:45.311  1557  2695 I ConnectivityService: B uid 10199
+02-08 21:45:45.312  3025 25350 W HKTTrainService: Constraint is not met for com.google.android.gms/.semanticlocation.mdd.MddDownloadScheduleService{u=0 tag="schedule_mdd_task" trigger=cadence{type=4} requirements=[NET_CONNECTED] attributes=[PERSISTED,HOUSEKEEPING] scheduled=-21897354s last_run=-24773s exec_window_multiplier=1.0000 jid=N/A status=PENDING retries=0 client_lib=GMS_TASK_SCHEDULER-251933000} [CONTEXT service_id=218 ]
+02-08 21:45:45.318  1557  2335 D PGGoogleServicePolicy: prevent gms/gsf hold partial wakelock
+02-08 21:45:45.318  3025  3025 D BoundBrokerSvc: onUnbind: Intent { act=com.google.android.gms.scheduler.standalone.housekeeping.HousekeepingTrainTaskService.ACTION_TASK_READY dat=chimera-action: cmp=com.google.android.gms/.chimera.PersistentInternalBoundBrokerService }
+02-08 21:45:45.319  3025 25377 I NetworkScheduler.Stats: (REDACTED) Task %s/%s finished executing. cause:%s result: %s elapsed_millis: %s uptime_millis: %s exec_start_elapsed_seconds: %s
+02-08 21:45:45.327  1557  2686 D SmartHeartBeat: isPendingAlarm, false, pkg:com.android.deskclock, action:com.android.deskclock.ALARM_ALERT,not pending alarm with AlarmClockInfo
+02-08 21:45:45.330  1557  2686 D HwConnectivityServiceEx: set 10221 wlan0 value false
+02-08 21:45:45.333 21101 21151 D HwCustConnectivityManagerImpl: isBlockNetworkRequestByNonAis, INVALID_SUBSCRIPTION_ID
+02-08 21:45:45.333 21101 21151 I ConnectivityManager: requestNetwork and the calling app is: live.weather.vitality.studio.forecast.widget
+02-08 21:45:45.339  1557  2686 I ConnectivityService: requestNetwork for uid/pid:10221/21101 NetworkRequest [ TRACK_DEFAULT id=376, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED Uid: 10221 DNN:  SSCMODE: 0 SNSSAI:  PduSessionType: 0 RouteBitmap: 0] ]
+02-08 21:45:45.340  1557  2115 I ConnectivityService: rematching NetworkAgentInfo [WIFI () - 104]
+02-08 21:45:45.340  1557  2115 I ConnectivityService: CS = 0, NS = 60
+02-08 21:45:45.341  1557  2115 I ConnectivityService: rematch for NetworkAgentInfo [WIFI () - 104]
+02-08 21:45:45.342  2914  3138 D DollieNetworkFactory: got request NetworkRequest [ TRACK_DEFAULT id=376, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED Uid: 10221 DNN:  SSCMODE: 0 SNSSAI:  PduSessionType: 0 RouteBitmap: 0] ] with score 60 and serial -1
+02-08 21:45:45.342  1557  2099 D WifiNetworkFactory: got request NetworkRequest [ TRACK_DEFAULT id=376, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED Uid: 10221 DNN:  SSCMODE: 0 SNSSAI:  PduSessionType: 0 RouteBitmap: 0] ] with score 60 and serial -1
+02-08 21:45:45.342  1557  2099 D UntrustedWifiNetworkFactory: got request NetworkRequest [ TRACK_DEFAULT id=376, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED Uid: 10221 DNN:  SSCMODE: 0 SNSSAI:  PduSessionType: 0 RouteBitmap: 0] ] with score 60 and serial -1
+02-08 21:45:45.342  3164  3164 D PhoneSwitcherNetworkRequstListener: got request NetworkRequest [ TRACK_DEFAULT id=376, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED Uid: 10221 DNN:  SSCMODE: 0 SNSSAI:  PduSessionType: 0 RouteBitmap: 0] ] with score 60 and serial -1
+02-08 21:45:45.342  1557  2200 D Ethernet: got request NetworkRequest [ TRACK_DEFAULT id=376, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED Uid: 10221 DNN:  SSCMODE: 0 SNSSAI:  PduSessionType: 0 RouteBitmap: 0] ] with score 60 and serial -1
+02-08 21:45:45.342  1557  2115 I ConnectivityService: NetworkAgentInfo [WIFI () - 104] NC all is: 57 355 332 49 349 45 303 300 130 38 140 268 326 8 273 11 265 164 31 80 299 255 358 352 10 64 1 331 83 34 42 9 297 260 44 17 330 47 25 4 117 86 120 94 
+02-08 21:45:45.346  1557  2686 D PGGoogleServicePolicy: prevent gms/gsf hold partial wakelock
+02-08 21:45:45.353  3025  3025 D BoundBrokerSvc: onRebind: Intent { act=com.google.android.gms.scheduler.standalone.housekeeping.HousekeepingTrainTaskService.ACTION_TASK_READY dat=chimera-action: cmp=com.google.android.gms/.chimera.PersistentInternalBoundBrokerService }
+02-08 21:45:45.359  1557  2686 I ConnectivityService: HAware B uid 10199 pid 3025
+02-08 21:45:45.359  1557  2686 I ConnectivityService: B uid 10199
+02-08 21:45:45.360  3025 25350 W HKTTrainService: Constraint is not met for com.google.android.gms/.droidguard.loader.VmPrefetcherTaskService{u=0 tag="VM_PREFETCH_1AFF9F" trigger=cadence{type=1} requirements=[NET_CONNECTED] attributes=[PERSISTED,HOUSEKEEPING] scheduled=-106890s last_run=N/A exec_window_multiplier=1.0000 jid=N/A status=PENDING retries=0 client_lib=GMS_TASK_SCHEDULER-254730000} [CONTEXT service_id=218 ]
+02-08 21:45:45.361  1557  2686 I ConnectivityService: HAware B uid 10199 pid 3025
+02-08 21:45:45.361  1557  2686 I ConnectivityService: B uid 10199
+02-08 21:45:45.361  3025 25350 W HKTTrainService: Constraint is not met for com.google.android.gms/.chromesync.tasks.UpdateAffiliationsTaskBoundService{u=10 tag="PasswordManagerPeriodicUpdateAffiliationsTaskTag" trigger=cadence{type=1} requirements=[NET_CONNECTED] attributes=[PERSISTED,HOUSEKEEPING] scheduled=-16449996s last_run=-24774s exec_window_multiplier=1.0000 jid=N/A status=PENDING retries=0 client_lib=GMS_TASK_SCHEDULER-252932000} [CONTEXT service_id=218 ]
+02-08 21:45:45.362  3164  3164 D PhoneSwitcherNetworkRequstListener: got request NetworkRequest [ TRACK_DEFAULT id=376, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED Uid: 10221 DNN:  SSCMODE: 0 SNSSAI:  PduSessionType: 0 RouteBitmap: 0] ] with score 60 and serial -1
+02-08 21:45:45.363  1557  2686 I ConnectivityService: HAware B uid 10199 pid 3025
+02-08 21:45:45.363  1557  2686 I ConnectivityService: B uid 10199
+02-08 21:45:45.364  3025 25350 W HKTTrainService: Constraint is not met for com.google.android.gms/.auth.api.credentials.fido.operations.chromesync.PasskeysCacheUpdateService{u=0 tag="PasskeysCacheUpdateTask" trigger=cadence{type=1} requirements=[NET_CONNECTED] attributes=[PERSISTED,HOUSEKEEPING] scheduled=-16450006s last_run=-24773s exec_window_multiplier=1.0000 jid=N/A status=PENDING retries=0 client_lib=GMS_TASK_SCHEDULER-252932000} [CONTEXT service_id=218 ]
+02-08 21:45:45.365  3025 25377 I NetworkScheduler.Stats: (REDACTED) Task %s/%s started execution. cause:%s exec_start_elapsed_seconds: %s
+02-08 21:45:45.365  1557  2686 I ConnectivityService: HAware B uid 10199 pid 3025
+02-08 21:45:45.365  1557  2695 D PGGoogleServicePolicy: prevent gms/gsf hold partial wakelock
+02-08 21:45:45.365  1557  2686 I ConnectivityService: B uid 10199
+02-08 21:45:45.365  3025 25350 W HKTTrainService: Constraint is not met for com.google.android.gms/.chromesync.tasks.UpdateAffiliationsTaskBoundService{u=0 tag="PasswordManagerPeriodicUpdateAffiliationsTaskTag" trigger=cadence{type=1} requirements=[NET_CONNECTED] attributes=[PERSISTED,HOUSEKEEPING] scheduled=-21897357s last_run=-24773s exec_window_multiplier=1.0000 jid=N/A status=PENDING retries=0 client_lib=GMS_TASK_SCHEDULER-251933000} [CONTEXT service_id=218 ]
+02-08 21:45:45.369  1557  2686 D SmartHeartBeat: isPendingAlarm, false, pkg:com.android.deskclock, action:com.android.deskclock.ALARM_ALERT,not pending alarm with AlarmClockInfo
+02-08 21:45:45.382  1557  2686 D PGGoogleServicePolicy: prevent gms/gsf hold partial wakelock
+02-08 21:45:45.384  3025 25377 I NetworkScheduler.Stats: (REDACTED) Task %s/%s started execution. cause:%s exec_start_elapsed_seconds: %s
+02-08 21:45:45.387  1557  2686 I ConnectivityService: HAware B uid 10199 pid 3025
+02-08 21:45:45.387  1557  2695 D PGGoogleServicePolicy: prevent gms/gsf hold partial wakelock
+02-08 21:45:45.387  1557  2686 I ConnectivityService: B uid 10199
+02-08 21:45:45.387  3025 25377 W HKTTrainService: Constraint is not met for com.google.android.gms/.semanticlocationhistory.edit.EditUploadJob{u=10 tag="EditUploadJob" trigger=cadence{type=0} requirements=[NET_CONNECTED,CHARGING] attributes=[PERSISTED,HOUSEKEEPING] scheduled=-16449966s last_run=-2112954s exec_window_multiplier=1.0000 jid=N/A status=PENDING retries=0 client_lib=GMS_TASK_SCHEDULER-252932000} [CONTEXT service_id=218 ]
+02-08 21:45:45.387  3025 25204 I NetworkScheduler.Stats: (REDACTED) Task %s/%s finished executing. cause:%s result: %s elapsed_millis: %s uptime_millis: %s exec_start_elapsed_seconds: %s
+02-08 21:45:45.388  1557  2695 I ConnectivityService: HAware B uid 10199 pid 3025
+02-08 21:45:45.388  1557  2695 I ConnectivityService: B uid 10199
+02-08 21:45:45.388  3025 25377 W HKTTrainService: Constraint is not met for com.google.android.gms/.semanticlocationhistory.db.backup.OdlhBackupService{u=10 tag="OdlhBackup" trigger=cadence{type=0} requirements=[NET_CONNECTED,CHARGING] attributes=[PERSISTED,HOUSEKEEPING] scheduled=-16449966s last_run=-2112954s exec_window_multiplier=1.0000 jid=N/A status=PENDING retries=0 client_lib=GMS_TASK_SCHEDULER-252932000} [CONTEXT service_id=218 ]
+02-08 21:45:45.389  1557  2695 I ConnectivityService: HAware B uid 10199 pid 3025
+02-08 21:45:45.389  1557  2695 I ConnectivityService: B uid 10199
+02-08 21:45:45.389  3025 25377 W HKTTrainService: Constraint is not met for com.google.android.gms/.backup.transport.snapshot.DeviceStateSnapshotLoggingTask{u=10 tag="device_state_snapshot_logging" trigger=cadence{type=0} requirements=[NET_CONNECTED,CHARGING] attributes=[PERSISTED,HOUSEKEEPING] scheduled=-16449997s last_run=-2112954s exec_window_multiplier=1.0000 jid=N/A status=PENDING retries=0 client_lib=GMS_TASK_SCHEDULER-252932000} [CONTEXT service_id=218 ]
+02-08 21:45:45.390  1557  2695 I ConnectivityService: HAware B uid 10199 pid 3025
+02-08 21:45:45.390  1557  2695 I ConnectivityService: B uid 10199
+02-08 21:45:45.390  3025 25377 W HKTTrainService: Constraint is not met for com.google.android.gms/.wallet.service.WalletGcmTaskService{u=0 tag="INSTANTBUY_SYNC_GCM_TASK_STEP_1" trigger=cadence{type=0} requirements=[NET_CONNECTED,CHARGING] attributes=[PERSISTED,HOUSEKEEPING] scheduled=-21898791s last_run=-2112952s exec_window_multiplier=1.0000 jid=N/A status=PENDING retries=0 client_lib=GMS_TASK_SCHEDULER-251933000} [CONTEXT service_id=218 ]
+02-08 21:45:45.391  1557  2695 I ConnectivityService: HAware B uid 10199 pid 3025
+02-08 21:45:45.391  1557  2695 I ConnectivityService: B uid 10199
+02-08 21:45:45.391  3025 25377 W HKTTrainService: Constraint is not met for com.google.android.gms/.wallet.service.WalletGcmTaskService{u=10 tag="INSTANTBUY_SYNC_GCM_TASK_STEP_1" trigger=cadence{type=0} requirements=[NET_CONNECTED,CHARGING] attributes=[PERSISTED,HOUSEKEEPING] scheduled=-21898668s last_run=-2112952s exec_window_multiplier=1.0000 jid=N/A status=PENDING retries=0 client_lib=GMS_TASK_SCHEDULER-251933000} [CONTEXT service_id=218 ]
+02-08 21:45:45.392  1557  2695 I ConnectivityService: HAware B uid 10199 pid 3025
+02-08 21:45:45.392  1557  2695 I ConnectivityService: B uid 10199
+02-08 21:45:45.392  3025 25377 W HKTTrainService: Constraint is not met for com.google.android.gms/.semanticlocationhistory.edit.EditUploadJob{u=0 tag="EditUploadJob" trigger=cadence{type=0} requirements=[NET_CONNECTED,CHARGING] attributes=[PERSISTED,HOUSEKEEPING] scheduled=-21897355s last_run=-2112952s exec_window_multiplier=1.0000 jid=N/A status=PENDING retries=0 client_lib=GMS_TASK_SCHEDULER-251933000} [CONTEXT service_id=218 ]
+02-08 21:45:45.393  1557  2695 I ConnectivityService: HAware B uid 10199 pid 3025
+02-08 21:45:45.393  1557  2695 I ConnectivityService: B uid 10199
+02-08 21:45:45.393  3025 25377 W HKTTrainService: Constraint is not met for com.google.android.gms/.semanticlocationhistory.db.backup.OdlhBackupService{u=0 tag="OdlhBackup" trigger=cadence{type=0} requirements=[NET_CONNECTED,CHARGING] attributes=[PERSISTED,HOUSEKEEPING] scheduled=-21897355s last_run=-2112952s exec_window_multiplier=1.0000 jid=N/A status=PENDING retries=0 client_lib=GMS_TASK_SCHEDULER-251933000} [CONTEXT service_id=218 ]
+02-08 21:45:45.394  1557  2695 I ConnectivityService: HAware B uid 10199 pid 3025
+02-08 21:45:45.394  1557  2695 I ConnectivityService: B uid 10199
+02-08 21:45:45.394  3025 25377 W HKTTrainService: Constraint is not met for com.google.android.gms/.backup.transport.snapshot.DeviceStateSnapshotLoggingTask{u=0 tag="device_state_snapshot_logging" trigger=cadence{type=0} requirements=[NET_CONNECTED,CHARGING] attributes=[PERSISTED,HOUSEKEEPING] scheduled=-21897358s last_run=-2112950s exec_window_multiplier=1.0000 jid=N/A status=PENDING retries=0 client_lib=GMS_TASK_SCHEDULER-251933000} [CONTEXT service_id=218 ]
+02-08 21:45:45.396  1557  2686 D PGGoogleServicePolicy: prevent gms/gsf hold partial wakelock
+02-08 21:45:45.399  1557  2695 D PGGoogleServicePolicy: prevent gms/gsf hold partial wakelock
+02-08 21:45:45.399  3025 25350 I NetworkScheduler.Stats: (REDACTED) Task %s/%s finished executing. cause:%s result: %s elapsed_millis: %s uptime_millis: %s exec_start_elapsed_seconds: %s
+02-08 21:45:45.400  3025  3025 D BoundBrokerSvc: onUnbind: Intent { act=com.google.android.gms.scheduler.standalone.housekeeping.HousekeepingTrainTaskService.ACTION_TASK_READY dat=chimera-action: cmp=com.google.android.gms/.chimera.PersistentInternalBoundBrokerService }
+02-08 21:45:45.407  1557  2695 D PGGoogleServicePolicy: prevent gms/gsf hold partial wakelock

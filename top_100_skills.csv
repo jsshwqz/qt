@@ -1,0 +1,101 @@
+Rank,Name,Description_CN,Category
+1,agent-tools,核心工具集：扩展系统操作能力,Core
+2,find-skills,搜索神器：实时检索最匹配技能,Search
+3,audit-website,Web审计：分析SEO与性能,Web
+4,git-master,Git大师：处理复杂冲突与原子提交,Dev
+5,frontend-ui-ux,UI生成：像素级界面创建,Design
+6,agent-browser,浏览器驱动：高精度网页抓取,Automation
+7,code-review,代码质量：自动化安全审计,Quality
+8,document-skills,全能办公：处理Excel/Word/PDF,Productivity
+9,commit-commands,智能规范：自动撰写Git记录,Dev
+10,typescript-best-practices,TS标准：强制执行工程模式,Dev
+11,playwright,自动化测试：全流程端到端验证,Test
+12,security-guidance,安全盾牌：实时防范Web漏洞,Security
+13,ai-coding-standards,AI规范：提升生成代码质量,Standard
+14,react-native-guidelines,移动开发：App性能与架构优化,Mobile
+15,tailwind-v4-design,设计系统：支持最新Tailwind v4,Frontend
+16,database-expert,DB调优：索引优化与查询加速,Database
+17,api-design-patterns,API设计：生产级RESTful/GraphQL,Backend
+18,nextjs-cursor-rules,Next.js模板：Cursor深度集成,Frontend
+19,python-clean-code,Python整洁：执行Pythonic风格,Programming
+20,devops-automation,运维助手：Docker/K8s/CI/CD流水线,DevOps
+21,opcua-mcp,工业互联：连接PLC与OPC UA服务器,Industrial
+22,mcp-server-solidworks,CAD自动化：SolidWorks参数建模,Industrial
+23,hardware-protocols,通讯大师：调试Modbus/MQTT/I2C,IoT
+24,engineering-spec-writer,文档助手：生成非标设备技术方案书,Engineering
+25,motion-control-expert,运动控制：伺服电机加减速曲线计算,Industrial
+26,seo-wizard,SEO优化：关键词分析与排名提升,Marketing
+27,canvas-design,画布设计：生成交互式数据可视化图表,Design
+28,youtube-summarizer,视频分析：抓取字幕并生成摘要,Productivity
+29,github-cli-pro,GitHub助手：管理PR/Issue与工作流,DevTools
+30,svg-animator,SVG动画：将静态图像转为网页动画,Frontend
+31,stripe-integration,支付集成：Stripe支付网关对接,Payments
+32,openai-api-handler,AI接口：OpenAI GPT模型调用封装,AI
+33,rust-safety-guide,Rust安全：内存安全与借用检查指南,Programming
+34,dockerfile-optimizer,Docker优化：缩减镜像体积与构建缓存,DevOps
+35,zod-schema-builder,Zod验证：TypeScript数据模式生成,Frontend
+36,regex-wizard,正则表达式：复杂匹配模式生成与解释,Tools
+37,shell-commander,Shell脚本：安全执行Bash/PowerShell,Tools
+38,visual-studio-code-rules,VS Code开发：插件API与调试规范,IDE
+39,cloud-cost-optimizer,云成本优化：分析AWS/GCP账单建议,DevOps
+40,technical-writer,技术文档：自动生成README与API文档,Documentation
+41,data-viz-generator,数据可视化：D3.js/ECharts图表生成,Frontend
+42,graphql-schema-builder,GraphQL模式：类型定义与查询生成,Backend
+43,cypress-testing,Cypress测试：端到端Web应用测试,Test
+44,kubernetes-manifest,K8s清单：Pod/Service配置生成,DevOps
+45,aws-lambda-handler,Lambda函数：无服务器后端开发模板,Backend
+46,prisma-schema-primer,Prisma ORM：数据库模式与迁移指南,Database
+47,jest-testing,Jest测试：单元测试与覆盖率优化,Test
+48,eslint-configurator,ESLint配置：代码风格与质量规则,Tools
+49,prettier-formatter,Prettier格式化：统一代码风格,Tools
+50,webpack-bundler,Webpack打包：模块打包与性能优化,Frontend
+51,esbuild-minifier,ESBuild压缩：极速构建与代码压缩,Frontend
+52,vite-scaffolder,Vite脚手架：现代前端项目初始化,Frontend
+53,svelte-quickstart,Svelte入门：轻量级UI框架开发,Frontend
+54,vue-composition-api,Vue组合式API：现代Vue开发模式,Frontend
+55,angular-architecture,Angular架构：模块化与依赖注入,Frontend
+56,nestjs-backend,NestJS后端：企业级Node.js框架,Backend
+57,fastapi-rest,FasAPI REST：Python高性能Web框架,Backend
+58,django-cms,Django CMS：内容管理系统快速搭建,Backend
+59,flask-micro Flask轻量：Python Web微框架,Backend,
+60,express-middleware,Express中间件：HTTP请求处理链,Backend
+61,hapi-framework,Hapi框架：配置驱动的Web开发,Backend
+62,sails-js,Sails.js：实时Web应用框架,Backend
+63,feather-js,FeatherJS：微服务与实时API构建,Backend
+64,adonisjs-backend,AdonisJS：全栈Web框架,Backend
+65,loopback-api,LoopBack API：Node.js企业级API,Backend
+66,strapi-headless,Strapi无头CMS：内容管理与API分发,Backend
+67,keystone-next,Keystone下一代：GraphQL内容管理,Backend
+68,directus-platform,Directus数据：SQL直接映射CMS,Backend
+69,contentful-sdk,Contentful SDK：内容交付API集成,Backend
+70,sanity-studio,Sanity工作室：实时内容工作室,Backend
+71,builder-io,Builder可视化：低代码页面构建,Frontend
+72,webflow-export,Webflow导出：设计稿转代码,Design
+73,framer-motion,Framer动画：React高级交互动画,Frontend
+74,react-spring,React弹簧：物理引擎动画库,Frontend
+75,gsap-animation,GSAP动画：专业级网页动画引擎,Frontend
+76,lottie-player,Lottie动画：After Effects导出播放,Frontend
+77,three-js-3d,Three.js 3D：WebGL三维渲染,Frontend
+78,react-three-fiber,R3F React：声明式Three.js封装,Frontend
+79,babylon-js,Babylon引擎：游戏级3D渲染引擎,Frontend
+80,sketchfab-api,Sketchfab API：3D模型嵌入与交互,Frontend
+81,figma-plugin,Figma插件：设计系统与组件导出,Design
+82,adobe-xd,XD设计：原型设计与协作流程,Design
+83,invision-app,InVision原型：设计评审与协作,Design
+84,marvel-app,Marvel原型：移动端原型测试,Design
+85,protopie,protoPie原型：高级交互动效制作,Design
+86,axure-rp,Axure原型：复杂产品原型设计,Design
+87,balsamiq-wireframes,Balsamiq线框：快速原型草图,Design
+88,whimsical,Whimsical协作：流程图与线框绘制,Design
+89,lucidchart,Lucidchart图表：流程图与架构图,Design
+90,miro-board,Miro白板：团队协作与头脑风暴,Collaboration
+91,notion-api,Notion集成：知识管理与数据库API,Productivity
+92,obsidian-vault,Obsidian知识库：双向链接笔记管理,Productivity
+93,logseq,Logseq大纲：基于大纲的笔记工具,Productivity
+94,roam-research,Roam研究：双向链接知识图谱,Productivity
+95,tana-notion,Tana知识：超节点与实时协作,Productivity
+96,slack-integration,Slack集成：团队沟通与Bot开发,Collaboration
+97,discord-bot,Discord机器人：社区管理与自动化,Collaboration
+98,zoom-sdk,Zoom会议：视频会议API集成,Communication
+99,twilio-sms,Twilio短信：发送与接收短信服务,Communication
+100,socket-io,Socket.IO：实时双向Web通信,Backend

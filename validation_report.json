@@ -1,0 +1,140 @@
+{
+  "timestamp": "2026-02-10T17:19:54.714442",
+  "total_tests": 26,
+  "passed": 24,
+  "failed": 0,
+  "warnings": 2,
+  "tests": [
+    {
+      "name": "File: adb_manager.py",
+      "status": "PASS",
+      "message": ""
+    },
+    {
+      "name": "File: scrcpy_server.py",
+      "status": "PASS",
+      "message": ""
+    },
+    {
+      "name": "File: scrcpy_client_enhanced.py",
+      "status": "PASS",
+      "message": ""
+    },
+    {
+      "name": "File: video_decoder_enhanced.py",
+      "status": "PASS",
+      "message": ""
+    },
+    {
+      "name": "File: control_enhanced.py",
+      "status": "PASS",
+      "message": ""
+    },
+    {
+      "name": "File: build_enhanced.py",
+      "status": "PASS",
+      "message": ""
+    },
+    {
+      "name": "File: adb.exe",
+      "status": "PASS",
+      "message": ""
+    },
+    {
+      "name": "File: scrcpy-server.jar",
+      "status": "PASS",
+      "message": ""
+    },
+    {
+      "name": "Syntax: adb_manager.py",
+      "status": "PASS",
+      "message": ""
+    },
+    {
+      "name": "Syntax: scrcpy_server.py",
+      "status": "PASS",
+      "message": ""
+    },
+    {
+      "name": "Syntax: scrcpy_client_enhanced.py",
+      "status": "PASS",
+      "message": ""
+    },
+    {
+      "name": "Syntax: video_decoder_enhanced.py",
+      "status": "PASS",
+      "message": ""
+    },
+    {
+      "name": "Syntax: control_enhanced.py",
+      "status": "PASS",
+      "message": ""
+    },
+    {
+      "name": "Syntax: build_enhanced.py",
+      "status": "PASS",
+      "message": ""
+    },
+    {
+      "name": "Syntax: unified_launcher.py",
+      "status": "PASS",
+      "message": ""
+    },
+    {
+      "name": "Import: PyQt5",
+      "status": "WARN",
+      "message": "No module named 'PyQt5'"
+    },
+    {
+      "name": "Import: numpy",
+      "status": "WARN",
+      "message": "No module named 'numpy'"
+    },
+    {
+      "name": "Import: struct",
+      "status": "PASS",
+      "message": ""
+    },
+    {
+      "name": "Import: socket",
+      "status": "PASS",
+      "message": ""
+    },
+    {
+      "name": "Import: logging",
+      "status": "PASS",
+      "message": ""
+    },
+    {
+      "name": "Module: AdbServerManager",
+      "status": "PASS",
+      "message": ""
+    },
+    {
+      "name": "Module: CoordinateTransformer",
+      "status": "PASS",
+      "message": ""
+    },
+    {
+      "name": "Module: TouchEvent",
+      "status": "PASS",
+      "message": ""
+    },
+    {
+      "name": "Module: VideoDecoder",
+      "status": "PASS",
+      "message": ""
+    },
+    {
+      "name": "Config: project_config.json",
+      "status": "PASS",
+      "message": ""
+    },
+    {
+      "name": "Build: Enhanced build script",
+      "status": "PASS",
+      "message": ""
+    }
+  ],
+  "overall_status": "SUCCESS"
+}

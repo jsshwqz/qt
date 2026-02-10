@@ -1,0 +1,39 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
+# Logs / temp
+*.log
+*.tmp
+*.temp
+
+# Build artifacts
+build/
+dist/
+*.exe
+*.pkg
+QtScrcpy-Release/
+QtScrcpy/third_party/ffmpeg/bin/
+QtScrcpy-v3.3.3.zip
+
+# Large archives
+*.7z
+*.tar
+*.gz
+
+# Node/electron heavy deps
+**/node_modules/
+
+# Tooling state
+.sisyphus/
+
+# Nested git repo (managed separately before)
+CloudBuild/

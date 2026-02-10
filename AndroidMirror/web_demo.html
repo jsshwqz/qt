@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AndroidMirror - Android投屏 (Web演示版)</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            color: #fff;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            padding: 40px 20px;
+            background: rgba(255,255,255,0.05);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 30px;
+        }
+        
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, #00d2ff, #3a7bd5);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        header p {
+            color: rgba(255,255,255,0.7);
+            font-size: 1.1em;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 5px 15px;
+            background: linear-gradient(90deg, #00d2ff, #3a7bd5);
+            border-radius: 20px;
+            font-size: 0.8em;
+            margin-top: 15px;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .card {
+            background: rgba(255,255,255,0.08);
+            border-radius: 15px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .card h2 {
+            font-size: 1.3em;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .device-list {
+            min-height: 150px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .device-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .device-item:hover {
+            background: rgba(255,255,255,0.1);
+            transform: translateX(5px);
+        }
+        
+        .device-item .icon {
+            font-size: 1.5em;
+            margin-right: 15px;
+        }
+        
+        .device-item .info {
+            flex: 1;
+        }
+        
+        .device-item .name {
+            font-weight: bold;
+            margin-bottom: 3px;
+        }
+        
+        .device-item .serial {
+            font-size: 0.8em;
+            color: rgba(255,255,255,0.5);
+        }
+        
+        .device-item .status {
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.8em;
+        }
+        
+        .status.connected {
+            background: #4CAF50;
+        }
+        
+        .status.disconnected {
+            background: #f44336;
+        }
+        
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            margin: 5px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(90deg, #00d2ff, #3a7bd5);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0,210,255,0.3);
+        }
+        
+        .btn-secondary {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.2);
+        }
+        
+        .video-container {
+            background: #000;
+            border-radius: 15px;
+            aspect-ratio: 16/9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .video-placeholder {
+            text-align: center;
+            color: rgba(255,255,255,0.5);
+        }
+        
+        .video-placeholder .icon {
+            font-size: 4em;
+            margin-bottom: 15px;
+        }
+        
+        .video-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+        
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .control-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            cursor: pointer;
+            font-size: 1.3em;
+            transition: all 0.3s ease;
+        }
+        
+        .control-btn:hover {
+            background: rgba(255,255,255,0.2);
+            transform: scale(1.1);
+        }
+        
+        .full-width {
+            grid-column: 1 / -1;
+        }
+        
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+        
+        .feature {
+            text-align: center;
+            padding: 25px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 15px;
+        }
+        
+        .feature .icon {
+            font-size: 2.5em;
+            margin-bottom: 15px;
+        }
+        
+        .feature h3 {
+            margin-bottom: 10px;
+        }
+        
+        .feature p {
+            font-size: 0.9em;
+            color: rgba(255,255,255,0.6);
+        }
+        
+        .alert {
+            background: rgba(255,193,7,0.2);
+            border: 1px solid rgba(255,193,7,0.5);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .alert h3 {
+            color: #ffc107;
+            margin-bottom: 10px;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 30px;
+            color: rgba(255,255,255,0.5);
+            font-size: 0.9em;
+        }
+        
+        footer a {
+            color: #00d2ff;
+            text-decoration: none;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: rgba(255,255,255,0.5);
+        }
+        
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255,255,255,0.1);
+            border-top-color: #00d2ff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .input-group {
+            margin-bottom: 15px;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 8px;
+            background: rgba(0,0,0,0.2);
+            color: white;
+            font-size: 1em;
+        }
+        
+        .input-group input:focus {
+            outline: none;
+            border-color: #00d2ff;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>📱 AndroidMirror</h1>
+            <p>Android 设备投屏控制工具</p>
+            <span class="badge">Web 演示版本</span>
+        </div>
+    </header>
+    
+    <div class="container">
+        <div class="alert">
+            <h3>⚠️ 使用说明</h3>
+            <p>这是一个 Web 演示版本，展示了 AndroidMirror 的界面和功能。</p>
+            <p><strong>要使用完整的投屏功能，请使用 Windows EXE 版本。</strong></p>
+            <p>下载 EXE: 在有完整 Python 环境的机器上运行 <code>AndroidMirror/build_exe.py</code></p>
+        </div>
+        
+        <div class="main-content">
+            <div class="card">
+                <h2>📱 设备连接</h2>
+                <div class="device-list" id="deviceList">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>检测设备中...</p>
+                    </div>
+                </div>
+                
+                <div class="input-group">
+                    <label>手动输入设备 IP 地址</label>
+                    <input type="text" id="deviceIp" placeholder="例如: 192.168.1.100:5555">
+                </div>
+                
+                <div>
+                    <button class="btn btn-primary" onclick="scanDevices()">🔍 扫描设备</button>
+                    <button class="btn btn-secondary" onclick="connectManual()">🔗 手动连接</button>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2>🖥️ 投屏预览</h2>
+                <div class="video-container" id="videoContainer">
+                    <div class="video-placeholder">
+                        <div class="icon">📺</div>
+                        <p>连接设备后显示投屏画面</p>
+                    </div>
+                    <div class="video-overlay" id="videoOverlay" style="display: none;">
+                        <div class="spinner"></div>
+                        <p>正在连接设备...</p>
+                    </div>
+                </div>
+                
+                <div class="controls">
+                    <button class="control-btn" title="Home">🏠</button>
+                    <button class="control-btn" title="返回">◀️</button>
+                    <button class="control-btn" title="多任务">📋</button>
+                    <button class="control-btn" title="菜单">☰</button>
+                    <button class="control-btn" title="电源">⏻</button>
+                    <button class="control-btn" title="音量+">🔊</button>
+                    <button class="control-btn" title="音量-">🔉</button>
+                    <button class="control-btn" title="下拉通知">🔔</button>
+                </div>
+                
+                <div style="margin-top: 15px; text-align: right;">
+                    <button class="btn btn-secondary" onclick="toggleFullscreen()">⛶ 全屏</button>
+                    <button class="btn btn-primary" onclick="startMirroring()">▶️ 开始投屏</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="features">
+            <div class="feature">
+                <div class="icon">📡</div>
+                <h3>无线投屏</h3>
+                <p>支持 USB 和无线两种连接方式，灵活便捷</p>
+            </div>
+            <div class="feature">
+                <div class="icon">🖱️</div>
+                <h3>反向控制</h3>
+                <p>用鼠标键盘控制 Android 设备，游戏办公更轻松</p>
+            </div>
+            <div class="feature">
+                <div class="icon">📁</div>
+                <h3>文件传输</h3>
+                <p>快速在电脑和手机之间传输文件</p>
+            </div>
+            <div class="feature">
+                <div class="icon">📋</div>
+                <h3>剪贴板同步</h3>
+                <p>电脑和手机剪贴板互通，复制粘贴更方便</p>
+            </div>
+        </div>
+        
+        <div class="card" style="margin-top: 30px;">
+            <h2>📖 使用指南</h2>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+                <div>
+                    <h3 style="color: #00d2ff; margin-bottom: 15px;">USB 连接步骤</h3>
+                    <ol style="line-height: 2; padding-left: 20px;">
+                        <li>在 Android 手机开启「开发者选项」</li>
+                        <li>启用「USB 调试」和「USB调试(安全设置)」</li>
+                        <li>用 USB 数据线连接手机和电脑</li>
+                        <li>在手机授权电脑上调试</li>
+                        <li>点击「刷新设备」后双击设备开始投屏</li>
+                    </ol>
+                </div>
+                <div>
+                    <h3 style="color: #00d2ff; margin-bottom: 15px;">无线连接步骤 (Android 11+)</h3>
+                    <ol style="line-height: 2; padding-left: 20px;">
+                        <li>手机连接到与电脑同一 WiFi</li>
+                        <li>进入「开发者选项」→「无线调试」</li>
+                        <li>开启无线调试，点击「使用配对码」</li>
+                        <li>记下显示的 IP 地址和端口</li>
+                        <li>在软件中输入 IP:端口 连接</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <footer>
+        <p>AndroidMirror v1.0.0 | 基于 Electron + scrcpy</p>
+        <p>完整功能请使用 Windows EXE 版本</p>
+    </footer>
+    
+    <script>
+        // 模拟设备检测
+        function scanDevices() {
+            const deviceList = document.getElementById('deviceList');
+            deviceList.innerHTML = '<div class="loading"><div class="spinner"></div><p>正在扫描局域网设备...</p></div>';
+            
+            // 模拟扫描延迟
+            setTimeout(() => {
+                // 模拟没有发现设备
+                deviceList.innerHTML = `
+                    <div style="text-align: center; padding: 30px; color: rgba(255,255,255,0.5);">
+                        <div style="font-size: 2em; margin-bottom: 10px;">🔍</div>
+                        <p>未发现设备</p>
+                        <p style="font-size: 0.8em; margin-top: 10px;">
+                            请确保：<br>
+                            1. 手机已开启 USB 调试<br>
+                            2. 或使用无线调试功能
+                        </p>
+                    </div>
+                `;
+            }, 2000);
+        }
+        
+        // 手动连接
+        function connectManual() {
+            const ip = document.getElementById('deviceIp').value.trim();
+            if (!ip) {
+                alert('请输入设备 IP 地址');
+                return;
+            }
+            
+            const deviceList = document.getElementById('deviceList');
+            deviceList.innerHTML = `<div class="loading"><div class="spinner"></div><p>正在连接 ${ip}...</p></div>`;
+            
+            setTimeout(() => {
+                deviceList.innerHTML = `
+                    <div class="device-item">
+                        <span class="icon">📱</span>
+                        <div class="info">
+                            <div class="name">未知设备</div>
+                            <div class="serial">${ip}</div>
+                        </div>
+                        <span class="status disconnected">连接失败</span>
+                    </div>
+                    <p style="text-align: center; color: rgba(255,255,255,0.5); margin-top: 15px;">
+                        Web 版本无法进行实际连接<br>
+                        请使用 EXE 版本获得完整功能
+                    </p>
+                `;
+            }, 1500);
+        }
+        
+        // 开始投屏
+        function startMirroring() {
+            const overlay = document.getElementById('videoOverlay');
+            overlay.style.display = 'flex';
+            
+            setTimeout(() => {
+                alert('这是 Web 演示版本，无法进行实际投屏。\n\n请下载 Windows EXE 版本获得完整功能！');
+                overlay.style.display = 'none';
+            }, 1000);
+        }
+        
+        // 全屏切换
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                document.exitFullscreen();
+            }
+        }
+        
+        // 页面加载时模拟检测
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                scanDevices();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

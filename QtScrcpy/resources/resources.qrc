@@ -1,0 +1,18 @@
+<RCC>
+    <qresource prefix="/">
+        <file>icons/logo.png</file>
+        <file>icons/connect.png</file>
+        <file>icons/disconnect.png</file>
+        <file>icons/fullscreen.png</file>
+        <file>icons/settings.png</file>
+        <file>icons/home.png</file>
+        <file>icons/back.png</file>
+        <file>icons/menu.png</file>
+        <file>icons/power.png</file>
+        <file>icons/volume_up.png</file>
+        <file>icons/volume_down.png</file>
+        <file>icons/notification.png</file>
+        <file>icons/screenshot.png</file>
+        <file>icons/record.png</file>
+    </qresource>
+</RCC>

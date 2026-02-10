@@ -1,0 +1,44 @@
+{
+  "name": "android-mirror",
+  "version": "1.0.0",
+  "description": "安卓投屏控制软件 - Android Screen Mirroring Tool",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --enable-logging",
+    "debug": "electron . --remote-debugging-port=9333 --remote-allow-origins=*",
+    "build": "electron-builder"
+  },
+  "author": "AndroidMirror",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.1"
+  },
+  "dependencies": {
+    "jmuxer": "^2.1.0",
+    "node-pty": "^1.0.0",
+    "ws": "^8.19.0"
+  },
+  "build": {
+    "appId": "com.androidmirror.app",
+    "productName": "AndroidMirror",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "resources/icon.ico"
+    },
+    "extraResources": [
+      {
+        "from": "resources/adb",
+        "to": "adb"
+      },
+      {
+        "from": "resources/scrcpy-server",
+        "to": "scrcpy-server"
+      }
+    ]
+  }
+}

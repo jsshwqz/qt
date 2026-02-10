@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' ws://127.0.0.1:* ws://localhost:*; media-src 'self' blob:;">
+    <title>AndroidMirror - 安卓投屏</title>
+    <link rel="stylesheet" href="styles/main.css">
+</head>
+<body>
+    <div id="app">
+        <!-- 侧边栏 -->
+        <aside class="sidebar">
+            <div class="logo">
+                <h1>📱 AndroidMirror</h1>
+            </div>
+
+            <!-- 设备列表 -->
+            <div class="section">
+                <div class="section-header">
+                    <span>设备列表</span>
+                    <button id="btn-refresh" class="icon-btn" title="刷新设备 (F5)">🔄</button>
+                </div>
+                <div id="device-list" class="device-list">
+                    <div class="loading">正在检测设备...</div>
+                </div>
+            </div>
+
+            <!-- 无线连接 -->
+            <div class="section">
+                <div class="section-header">
+                    <span>无线连接</span>
+                    <div>
+                        <button id="btn-help" class="icon-btn" title="帮助">❓</button>
+                        <button id="btn-scan" class="icon-btn" title="扫描局域网">📡</button>
+                    </div>
+                </div>
+                <div id="network-info" class="network-info"></div>
+                <div id="wireless-list" class="device-list">
+                    <div class="hint">点击扫描按钮搜索设备</div>
+                </div>
+                <div class="connect-input">
+                    <input type="text" id="input-ip" placeholder="IP:端口 (如 192.168.1.100:5555)">
+                    <button id="btn-connect">连接</button>
+                </div>
+            </div>
+
+            <!-- 无线帮助对话框 -->
+            <div id="help-dialog" class="dialog">
+                <div class="dialog-content">
+                    <h3>📶 无线连接帮助</h3>
+                    <div class="help-content">
+                        <p><strong>方法一：Android 11+（推荐）</strong></p>
+                        <ol>
+                            <li>手机连接到与电脑同一 WiFi</li>
+                            <li>开发者选项 → 无线调试 → 开启</li>
+                            <li>点击"使用配对码配对设备"</li>
+                            <li>记下显示的 IP 和端口</li>
+                            <li>在本软件输入 IP:端口 连接</li>
+                        </ol>
+                        <p><strong>方法二：先USB后无线</strong></p>
+                        <ol>
+                            <li>先用 USB 连接手机到电脑</li>
+                            <li>在设备列表中右键 → 开启无线</li>
+                            <li>拔掉 USB，使用无线扫描</li>
+                        </ol>
+                    </div>
+                    <div class="dialog-actions">
+                        <button id="btn-close-help" class="primary">知道了</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 快捷操作 -->
+            <div class="section">
+                <div class="section-header">快捷操作</div>
+                <div class="shortcuts">
+                    <button id="btn-home" title="Home键">🏠</button>
+                    <button id="btn-back" title="返回键">◀️</button>
+                    <button id="btn-switch" title="多任务">📋</button>
+                    <button id="btn-menu" title="菜单键">☰</button>
+                    <button id="btn-power" title="电源键">⏻</button>
+                    <button id="btn-vol-up" title="音量+">🔊</button>
+                    <button id="btn-vol-down" title="音量-">🔉</button>
+                    <button id="btn-notify" title="下拉通知">🔔</button>
+                    <button id="btn-settings" title="快捷设置">⚙️</button>
+                    <button id="btn-fullscreen" title="全屏 (F11)">⛶</button>
+                </div>
+            </div>
+
+            <!-- 剪贴板 -->
+            <div class="section">
+                <div class="section-header">剪贴板同步</div>
+                <div class="clipboard-actions">
+                    <button id="btn-paste-to-device">粘贴到手机</button>
+                    <button id="btn-type-text">输入文字</button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- 主内容区 -->
+        <main class="main-content">
+            <!-- 欢迎界面 -->
+            <div id="welcome-view" class="view active">
+                <div class="welcome-content">
+                    <div class="welcome-icon">📱</div>
+                    <h2>欢迎使用 AndroidMirror</h2>
+                    <p>请连接您的安卓设备开始投屏</p>
+                    <div class="welcome-steps">
+                        <div class="step">
+                            <span class="step-num">1</span>
+                            <span>在手机上开启 USB 调试</span>
+                        </div>
+                        <div class="step">
+                            <span class="step-num">2</span>
+                            <span>用 USB 数据线连接手机和电脑</span>
+                        </div>
+                        <div class="step">
+                            <span class="step-num">3</span>
+                            <span>在设备列表中双击开始投屏</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 投屏视图 -->
+            <div id="mirror-view" class="view">
+                <div class="video-container" id="video-container">
+                    <video id="video-player" autoplay muted></video>
+                    <!-- <canvas id="video-canvas"></canvas> -->
+                    <div class="video-overlay" id="video-overlay">
+                        <div class="connecting">
+                            <div class="spinner"></div>
+                            <span>正在连接...</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="video-toolbar">
+                    <span id="device-info">未连接</span>
+                    <span id="fps-info">0 FPS</span>
+                    <button id="btn-disconnect" class="danger">断开连接</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 提示框 -->
+    <div id="toast" class="toast"></div>
+
+    <!-- 输入对话框 -->
+    <div id="text-dialog" class="dialog">
+        <div class="dialog-content">
+            <h3>输入文字</h3>
+            <textarea id="input-text" placeholder="输入要发送到手机的文字..."></textarea>
+            <div class="dialog-actions">
+                <button id="btn-cancel-text">取消</button>
+                <button id="btn-send-text" class="primary">发送</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="renderer/jmuxer.min.js"></script>
+    <script src="renderer/app.js"></script>
+</body>
+</html>

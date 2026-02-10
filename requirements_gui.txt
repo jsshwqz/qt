@@ -1,0 +1,24 @@
+# WiFi手机投屏GUI应用依赖
+
+# GUI框架
+PyQt5>=5.15.0
+qasync>=0.23.0
+
+# 图表绘制 (可选)
+pyqtgraph>=0.12.0
+
+# 系统监控 (可选)
+psutil>=5.8.0
+
+# 视频处理 (可选)
+opencv-python>=4.5.0
+numpy>=1.21.0
+
+# WebRTC支持 (可选)
+aiohttp>=3.8.0
+websockets>=10.0
+aiortc>=1.3.0
+av>=9.0.0
+
+# 打包工具
+pyinstaller>=6.0.0
