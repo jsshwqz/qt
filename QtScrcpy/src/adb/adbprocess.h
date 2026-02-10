@@ -12,6 +12,7 @@
 #include <QProcess>
 #include <QString>
 #include <QStringList>
+#include <QSize>
 
 /**
  * @brief ADB进程管理类
