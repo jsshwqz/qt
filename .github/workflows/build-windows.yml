@@ -24,6 +24,7 @@ jobs:
           host: "windows"
           target: "desktop"
           arch: "win64_msvc2019_64"
+          modules: "qtmultimedia"
           cache: true
 
       - name: Enable MSVC toolchain
@@ -89,4 +90,3 @@ jobs:
           path: |
             release/QtScrcpy-win-x64.zip
             release/QtScrcpy-win-x64/**
-
