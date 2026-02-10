@@ -39,7 +39,7 @@ class ScrcpyServerManager:
             return False
 
     def setup_port_forwarding(self, local_port=27183):
-        return self.adb_manager.forward_port(self.device_id, local_port, local_port)
+        return self.adb_manager.forward_port(self.device_id, local_port, f"tcp:{local_port}")
 
     def stop_server(self):
         if self.server_process:
