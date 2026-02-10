@@ -16,6 +16,7 @@
 #include <QTimer>
 
 #include "adb/devicemanager.h"
+#include "adb/devicediscovery.h"
 #include "server/servermanager.h"
 
 class VideoWidget;
@@ -27,7 +28,6 @@ class ClipboardManager;
 class FileTransfer;
 class Shortcuts;
 class VolumeController;
-class DeviceDiscovery;
 class QPushButton;
 class QLineEdit;
 

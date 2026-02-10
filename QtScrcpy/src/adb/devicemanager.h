@@ -13,6 +13,7 @@
 #include <QList>
 #include <QTimer>
 #include <QMap>
+#include <QSize>
 
 class AdbProcess;
 

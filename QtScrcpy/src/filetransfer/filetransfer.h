@@ -13,7 +13,7 @@
 #include <QStringList>
 #include <QThread>
 
-class AdbProcess;
+#include "adb/adbprocess.h"
 
 /**
  * @brief 传输任务信息
