@@ -1,0 +1,92 @@
+name: Build QtScrcpy Windows EXE
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "QtScrcpy/**"
+      - ".github/workflows/build-windows.yml"
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Qt 6 (cloud)
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: "6.6.3"
+          host: "windows"
+          target: "desktop"
+          arch: "win64_msvc2019_64"
+          cache: true
+
+      - name: Enable MSVC toolchain
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Configure CMake
+        run: cmake -S QtScrcpy -B build -G "Ninja" -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build --config Release
+
+      - name: Package runtime files
+        shell: powershell
+        run: |
+          $outDir = (Resolve-Path "build").Path
+          $exe = Join-Path $outDir "QtScrcpy.exe"
+          if (!(Test-Path $exe)) {
+            throw "QtScrcpy.exe not found in $outDir"
+          }
+
+          windeployqt --release --compiler-runtime $exe
+
+          New-Item -ItemType Directory -Force -Path (Join-Path $outDir "adb") | Out-Null
+          Copy-Item "QtScrcpy/third_party/adb/*" (Join-Path $outDir "adb") -Recurse -Force
+          Copy-Item "QtScrcpy/resources/scrcpy-server" (Join-Path $outDir "scrcpy-server") -Force
+
+          if (Test-Path "QtScrcpy/third_party/ffmpeg/bin") {
+            Copy-Item "QtScrcpy/third_party/ffmpeg/bin/*" $outDir -Force
+          } else {
+            $fallback = "QtScrcpy-Release/QtScrcpy-win-x64-v3.3.3"
+            if (Test-Path $fallback) {
+              $dlls = @("avcodec-58.dll", "avformat-58.dll", "avutil-56.dll", "swscale-5.dll", "swresample-3.dll")
+              foreach ($dll in $dlls) {
+                $src = Join-Path $fallback $dll
+                if (Test-Path $src) {
+                  Copy-Item $src $outDir -Force
+                }
+              }
+            }
+          }
+
+          $releaseDir = Join-Path (Resolve-Path ".").Path "release"
+          New-Item -ItemType Directory -Force -Path $releaseDir | Out-Null
+          $pkgDir = Join-Path $releaseDir "QtScrcpy-win-x64"
+          if (Test-Path $pkgDir) {
+            Remove-Item $pkgDir -Recurse -Force
+          }
+          New-Item -ItemType Directory -Force -Path $pkgDir | Out-Null
+          Copy-Item "$outDir/*" $pkgDir -Recurse -Force
+
+          $zipPath = Join-Path $releaseDir "QtScrcpy-win-x64.zip"
+          if (Test-Path $zipPath) {
+            Remove-Item $zipPath -Force
+          }
+          Compress-Archive -Path "$pkgDir/*" -DestinationPath $zipPath
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: QtScrcpy-win-x64
+          path: |
+            release/QtScrcpy-win-x64.zip
+            release/QtScrcpy-win-x64/**
+
