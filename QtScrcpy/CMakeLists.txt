@@ -103,12 +103,14 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
 
 # Windows 特定设置
 if(WIN32)
-    # 复制 FFmpeg DLL 到输出目录
-    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-        "${FFMPEG_BIN_DIR}"
-        $<TARGET_FILE_DIR:${PROJECT_NAME}>
-    )
+    # 复制 FFmpeg DLL 到输出目录（当目录存在时）
+    if(EXISTS "${FFMPEG_BIN_DIR}")
+        add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_directory
+            "${FFMPEG_BIN_DIR}"
+            $<TARGET_FILE_DIR:${PROJECT_NAME}>
+        )
+    endif()
     
     # 复制 ADB 到输出目录
     add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
