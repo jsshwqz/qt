@@ -104,7 +104,11 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          $code = 1
           for ($i=0; $i -lt 3; $i++) {
-            gh release upload v3.0.0-delivery-20260210 release/QtScrcpy-win-x64.zip --clobber && break
+            gh release upload v3.0.0-delivery-20260210 release/QtScrcpy-win-x64.zip --clobber
+            $code = $LASTEXITCODE
+            if ($code -eq 0) { break }
             Start-Sleep -Seconds 5
           }
+          if ($code -ne 0) { exit $code }
