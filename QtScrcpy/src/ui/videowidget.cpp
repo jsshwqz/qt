@@ -12,6 +12,7 @@
 #include <QMouseEvent>
 #include <QKeyEvent>
 #include <QWheelEvent>
+#include <QInputMethodEvent>
 #include <QDragEnterEvent>
 #include <QDropEvent>
 #include <QMimeData>
@@ -31,6 +32,7 @@ VideoWidget::VideoWidget(QWidget *parent)
 {
     // 设置焦点策略
     setFocusPolicy(Qt::StrongFocus);
+    setAttribute(Qt::WA_InputMethodEnabled, true);
     
     // 允许拖放
     setAcceptDrops(true);
@@ -316,6 +318,30 @@ void VideoWidget::keyReleaseEvent(QKeyEvent* event)
     if (m_inputHandler) {
         m_inputHandler->handleKeyRelease(event);
     }
+}
+
+void VideoWidget::inputMethodEvent(QInputMethodEvent* event)
+{
+    if (m_inputHandler && event) {
+        const QString committedText = event->commitString();
+        if (!committedText.isEmpty()) {
+            m_inputHandler->handleTextInput(committedText);
+        }
+    }
+    if (event) {
+        event->accept();
+    }
+}
+
+QVariant VideoWidget::inputMethodQuery(Qt::InputMethodQuery query) const
+{
+    if (query == Qt::ImEnabled) {
+        return true;
+    }
+    if (query == Qt::ImCursorRectangle) {
+        return rect();
+    }
+    return QWidget::inputMethodQuery(query);
 }
 
 // 拖放处理

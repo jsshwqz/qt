@@ -23,10 +23,10 @@
 #include <QMenu>
 #include <QStatusBar>
 #include <QMessageBox>
-#include <QInputDialog>
 #include <QCloseEvent>
 #include <QLineEdit>
 #include <QGroupBox>
+#include <QKeySequence>
 #include <QDebug>
 
 MainWindow::MainWindow(QWidget *parent)
@@ -43,17 +43,26 @@ MainWindow::MainWindow(QWidget *parent)
     , m_shortcuts(nullptr)
     , m_volumeController(nullptr)
     , m_isConnected(false)
+    , m_autoScanTimer(new QTimer(this))
+    , m_autoScanEnabled(true)
 {
     setupUi();
     setupMenuBar();
     setupStatusBar();
     setupConnections();
-    
-    // 开始监控设备
+
+    m_autoScanTimer->setInterval(30000);
+    connect(m_autoScanTimer, &QTimer::timeout, this, [this]() {
+        triggerAutoWirelessScan(false);
+    });
+    m_autoScanTimer->start();
+
     m_deviceManager->startMonitoring();
-    
-    // 显示设备列表
     showDeviceList();
+
+    QTimer::singleShot(1200, this, [this]() {
+        triggerAutoWirelessScan(true);
+    });
 }
 
 MainWindow::~MainWindow()
@@ -64,24 +73,21 @@ MainWindow::~MainWindow()
 
 void MainWindow::setupUi()
 {
-    setWindowTitle("QtScrcpy - 安卓投屏");
+    setWindowTitle("QtScrcpy - Android Mirroring");
     setMinimumSize(400, 600);
     resize(400, 700);
-    
+
     setCentralWidget(m_stackedWidget);
-    
-    // ===== 设备列表页 =====
+
     m_deviceListPage = new QWidget(this);
     QVBoxLayout* deviceLayout = new QVBoxLayout(m_deviceListPage);
     deviceLayout->setContentsMargins(16, 16, 16, 16);
     deviceLayout->setSpacing(12);
-    
-    // 标题
-    QLabel* titleLabel = new QLabel("选择设备", m_deviceListPage);
+
+    QLabel* titleLabel = new QLabel("Select Device", m_deviceListPage);
     titleLabel->setStyleSheet("font-size: 24px; font-weight: bold; margin-bottom: 8px;");
     deviceLayout->addWidget(titleLabel);
-    
-    // 设备列表
+
     m_deviceList = new QListWidget(m_deviceListPage);
     m_deviceList->setStyleSheet(R"(
         QListWidget {
@@ -103,32 +109,28 @@ void MainWindow::setupUi()
         }
     )");
     deviceLayout->addWidget(m_deviceList, 1);
-    
-    // 扫描进度
+
     m_scanProgress = new QProgressBar(m_deviceListPage);
     m_scanProgress->setVisible(false);
     m_scanProgress->setTextVisible(true);
-    m_scanProgress->setFormat("扫描中... %p%");
+    m_scanProgress->setFormat("Scanning... %p%");
     deviceLayout->addWidget(m_scanProgress);
-    
-    // 手动连接区域
-    QGroupBox* manualGroup = new QGroupBox("手动连接", m_deviceListPage);
+
+    QGroupBox* manualGroup = new QGroupBox("Manual Wireless Connection", m_deviceListPage);
     QHBoxLayout* manualLayout = new QHBoxLayout(manualGroup);
-    
+
     m_ipInput = new QLineEdit(manualGroup);
-    m_ipInput->setPlaceholderText("输入IP地址，如 192.168.1.100");
+    m_ipInput->setPlaceholderText("Phone IP, e.g. 192.168.1.100");
     manualLayout->addWidget(m_ipInput);
-    
-    m_connectBtn = new QPushButton("连接", manualGroup);
+
+    m_connectBtn = new QPushButton("Connect", manualGroup);
     m_connectBtn->setFixedWidth(80);
     manualLayout->addWidget(m_connectBtn);
-    
     deviceLayout->addWidget(manualGroup);
-    
-    // 按钮区域
+
     QHBoxLayout* btnLayout = new QHBoxLayout();
-    
-    m_scanBtn = new QPushButton("🔍 扫描无线设备", m_deviceListPage);
+
+    m_scanBtn = new QPushButton("Scan Wireless Devices", m_deviceListPage);
     m_scanBtn->setStyleSheet(R"(
         QPushButton {
             background-color: #0e639c;
@@ -142,138 +144,120 @@ void MainWindow::setupUi()
         }
     )");
     btnLayout->addWidget(m_scanBtn);
-    
-    QPushButton* refreshBtn = new QPushButton("🔄 刷新", m_deviceListPage);
+
+    QPushButton* refreshBtn = new QPushButton("Refresh", m_deviceListPage);
     connect(refreshBtn, &QPushButton::clicked, m_deviceManager, &DeviceManager::refreshDevices);
     btnLayout->addWidget(refreshBtn);
-    
     deviceLayout->addLayout(btnLayout);
-    
-    // 提示
+
     QLabel* tipLabel = new QLabel(
-        "💡 提示：\n"
-        "• USB连接：启用USB调试，连接数据线\n"
-        "• 无线连接：首次需要USB授权或使用无线调试（Android 11+）\n"
-        "• 双击设备开始投屏",
+        "Tips:\n"
+        "- USB: enable USB debugging and connect via cable.\n"
+        "- Wireless: keep phone and PC on the same Wi-Fi subnet.\n"
+        "- Double-click a device to start mirroring.",
         m_deviceListPage
     );
     tipLabel->setStyleSheet("color: #888888; font-size: 12px; margin-top: 8px;");
     tipLabel->setWordWrap(true);
     deviceLayout->addWidget(tipLabel);
-    
+
     m_stackedWidget->addWidget(m_deviceListPage);
-    
-    // ===== 视频页 =====
+
     m_videoPage = new QWidget(this);
     QVBoxLayout* videoLayout = new QVBoxLayout(m_videoPage);
     videoLayout->setContentsMargins(0, 0, 0, 0);
     videoLayout->setSpacing(0);
-    
-    // 工具栏
+
     m_toolbar = new ToolbarWidget(m_videoPage);
     videoLayout->addWidget(m_toolbar);
-    
-    // 视频区域
+
     m_videoWidget = new VideoWidget(m_videoPage);
     videoLayout->addWidget(m_videoWidget, 1);
-    
+
     m_stackedWidget->addWidget(m_videoPage);
 }
 
 void MainWindow::setupMenuBar()
 {
     QMenuBar* menuBar = this->menuBar();
-    
-    // 文件菜单
-    QMenu* fileMenu = menuBar->addMenu("文件(&F)");
-    fileMenu->addAction("返回设备列表", this, [this]() {
+
+    QMenu* fileMenu = menuBar->addMenu("File(&F)");
+    fileMenu->addAction("Back to Device List", this, [this]() {
         disconnectFromDevice();
         showDeviceList();
     });
     fileMenu->addSeparator();
-    fileMenu->addAction("退出(&X)", this, &QMainWindow::close, QKeySequence::Quit);
-    
-    // 设备菜单
-    QMenu* deviceMenu = menuBar->addMenu("设备(&D)");
-    deviceMenu->addAction("刷新设备列表", m_deviceManager, &DeviceManager::refreshDevices, QKeySequence::Refresh);
-    deviceMenu->addAction("扫描无线设备", this, &MainWindow::onScanDevices);
+    fileMenu->addAction("Exit(&X)", this, &QMainWindow::close, QKeySequence::Quit);
+
+    QMenu* deviceMenu = menuBar->addMenu("Device(&D)");
+    deviceMenu->addAction("Refresh Devices", m_deviceManager, &DeviceManager::refreshDevices, QKeySequence::Refresh);
+    deviceMenu->addAction("Scan Wireless Devices", this, &MainWindow::onScanDevices);
     deviceMenu->addSeparator();
-    deviceMenu->addAction("断开连接", this, &MainWindow::onDisconnectDevice);
-    
-    // 控制菜单
-    QMenu* controlMenu = menuBar->addMenu("控制(&C)");
+    deviceMenu->addAction("Disconnect", this, &MainWindow::onDisconnectDevice);
+
+    QMenu* controlMenu = menuBar->addMenu("Control(&C)");
     controlMenu->addAction("Home", this, &MainWindow::onHomeClicked, QKeySequence("Ctrl+H"));
-    controlMenu->addAction("返回", this, &MainWindow::onBackClicked, QKeySequence("Ctrl+B"));
-    controlMenu->addAction("多任务", this, &MainWindow::onAppSwitchClicked, QKeySequence("Ctrl+S"));
+    controlMenu->addAction("Back", this, &MainWindow::onBackClicked, QKeySequence("Ctrl+B"));
+    controlMenu->addAction("Recent Apps", this, &MainWindow::onAppSwitchClicked, QKeySequence("Ctrl+S"));
     controlMenu->addSeparator();
-    controlMenu->addAction("音量+", this, &MainWindow::onVolumeUpClicked, QKeySequence("Ctrl+Up"));
-    controlMenu->addAction("音量-", this, &MainWindow::onVolumeDownClicked, QKeySequence("Ctrl+Down"));
+    controlMenu->addAction("Volume +", this, &MainWindow::onVolumeUpClicked, QKeySequence("Ctrl+Up"));
+    controlMenu->addAction("Volume -", this, &MainWindow::onVolumeDownClicked, QKeySequence("Ctrl+Down"));
     controlMenu->addSeparator();
-    controlMenu->addAction("下拉通知栏", this, &MainWindow::onExpandNotificationsClicked, QKeySequence("Ctrl+N"));
-    controlMenu->addAction("快捷设置", this, &MainWindow::onExpandSettingsClicked, QKeySequence("Ctrl+Shift+N"));
-    
-    // 视图菜单
-    QMenu* viewMenu = menuBar->addMenu("视图(&V)");
-    viewMenu->addAction("全屏", this, &MainWindow::onFullscreenClicked, QKeySequence::FullScreen);
-    viewMenu->addAction("适应窗口", m_videoWidget, &VideoWidget::resizeToFit, QKeySequence("Ctrl+G"));
-    viewMenu->addAction("原始大小", m_videoWidget, &VideoWidget::resizeToOriginal, QKeySequence("Ctrl+X"));
-    
-    // 帮助菜单
-    QMenu* helpMenu = menuBar->addMenu("帮助(&H)");
-    helpMenu->addAction("关于", this, [this]() {
-        QMessageBox::about(this, "关于 QtScrcpy",
+    controlMenu->addAction("Notifications", this, &MainWindow::onExpandNotificationsClicked, QKeySequence("Ctrl+N"));
+    controlMenu->addAction("Quick Settings", this, &MainWindow::onExpandSettingsClicked, QKeySequence("Ctrl+Shift+N"));
+
+    QMenu* viewMenu = menuBar->addMenu("View(&V)");
+    viewMenu->addAction("Fullscreen", this, &MainWindow::onFullscreenClicked, QKeySequence::FullScreen);
+    viewMenu->addAction("Resize to Fit", m_videoWidget, &VideoWidget::resizeToFit, QKeySequence("Ctrl+G"));
+    viewMenu->addAction("Original Size", m_videoWidget, &VideoWidget::resizeToOriginal, QKeySequence("Ctrl+X"));
+
+    QMenu* helpMenu = menuBar->addMenu("Help(&H)");
+    helpMenu->addAction("About", this, [this]() {
+        QMessageBox::about(this, "About QtScrcpy",
             "<h2>QtScrcpy</h2>"
-            "<p>版本 1.0.0</p>"
-            "<p>一款开源的安卓投屏控制软件</p>"
-            "<p>基于 Qt 和 scrcpy 开发</p>"
-            "<p>许可证：Apache License 2.0</p>"
-        );
+            "<p>Version 1.0.0</p>"
+            "<p>Open source Android mirroring and control application</p>"
+            "<p>License: Apache License 2.0</p>");
     });
 }
 
 void MainWindow::setupStatusBar()
 {
     QStatusBar* status = statusBar();
-    
-    m_statusLabel = new QLabel("就绪");
+    m_statusLabel = new QLabel("Ready");
     status->addWidget(m_statusLabel, 1);
-    
+
     m_resolutionLabel = new QLabel("");
     status->addPermanentWidget(m_resolutionLabel);
-    
+
     m_fpsLabel = new QLabel("");
     status->addPermanentWidget(m_fpsLabel);
 }
 
 void MainWindow::setupConnections()
 {
-    // 设备管理
     connect(m_deviceManager, &DeviceManager::devicesUpdated,
             this, &MainWindow::onDevicesUpdated);
-    
-    // 设备列表
+
     connect(m_deviceList, &QListWidget::itemDoubleClicked,
             this, &MainWindow::onDeviceDoubleClicked);
     connect(m_scanBtn, &QPushButton::clicked,
             this, &MainWindow::onScanDevices);
     connect(m_connectBtn, &QPushButton::clicked,
             this, &MainWindow::onConnectDevice);
-    
-    // 设备发现
+
     connect(m_deviceDiscovery, &DeviceDiscovery::scanProgress,
             this, &MainWindow::onScanProgress);
     connect(m_deviceDiscovery, &DeviceDiscovery::scanFinished,
             this, &MainWindow::onScanFinished);
-    
-    // 服务端管理
+
     connect(m_serverManager, &ServerManager::stateChanged,
             this, &MainWindow::onServerStateChanged);
     connect(m_serverManager, &ServerManager::serverReady,
             this, &MainWindow::onServerReady);
     connect(m_serverManager, &ServerManager::error,
             this, &MainWindow::onServerError);
-    
-    // 视频流
+
     connect(m_videoStream, &VideoStream::connected,
             this, &MainWindow::onVideoConnected);
     connect(m_videoStream, &VideoStream::disconnected,
@@ -282,20 +266,17 @@ void MainWindow::setupConnections()
             this, &MainWindow::onFrameReady);
     connect(m_videoStream, &VideoStream::deviceInfoReceived,
             this, &MainWindow::onDeviceInfoReceived);
-    
-    // 视频窗口
+
     connect(m_videoWidget, &VideoWidget::filesDropped,
             this, &MainWindow::onFilesDropped);
     connect(m_videoWidget, &VideoWidget::fpsUpdated,
             this, &MainWindow::onFpsUpdated);
     connect(m_videoWidget, &VideoWidget::doubleClicked,
             this, &MainWindow::onVideoDoubleClicked);
-    
-    // 输入处理
+
     connect(m_inputHandler, &InputHandler::shortcutTriggered,
             this, &MainWindow::onShortcutTriggered);
-    
-    // 工具栏
+
     connect(m_toolbar, &ToolbarWidget::homeClicked, this, &MainWindow::onHomeClicked);
     connect(m_toolbar, &ToolbarWidget::backClicked, this, &MainWindow::onBackClicked);
     connect(m_toolbar, &ToolbarWidget::appSwitchClicked, this, &MainWindow::onAppSwitchClicked);
@@ -319,37 +300,34 @@ void MainWindow::closeEvent(QCloseEvent* event)
 void MainWindow::onDevicesUpdated(const QList<DeviceInfo>& devices)
 {
     m_deviceList->clear();
-    
+
     for (const DeviceInfo& info : devices) {
-        QString text = info.model.isEmpty() ? info.serial : info.model;
-        
+        QString name = info.model.isEmpty() ? info.serial : info.model;
+        QString label = name;
         if (info.isWireless) {
-            text += QString(" (无线 %1)").arg(info.ipAddress);
+            label += QString(" (Wi-Fi %1:%2)").arg(info.ipAddress).arg(info.port);
+            label = "[Wi-Fi] " + label;
         } else {
-            text += " (USB)";
+            label += " (USB)";
+            label = "[USB] " + label;
         }
-        
-        QListWidgetItem* item = new QListWidgetItem(text, m_deviceList);
+
+        QListWidgetItem* item = new QListWidgetItem(label, m_deviceList);
         item->setData(Qt::UserRole, info.serial);
-        
-        // 设置图标
-        if (info.isWireless) {
-            item->setText("📶 " + text);
-        } else {
-            item->setText("🔌 " + text);
-        }
     }
-    
+
     if (devices.isEmpty()) {
-        QListWidgetItem* item = new QListWidgetItem("没有发现设备", m_deviceList);
+        QListWidgetItem* item = new QListWidgetItem("No device detected", m_deviceList);
         item->setFlags(item->flags() & ~Qt::ItemIsSelectable);
         item->setForeground(Qt::gray);
     }
+
+    triggerAutoWirelessScan(false);
 }
 
 void MainWindow::onDeviceDoubleClicked(QListWidgetItem* item)
 {
-    QString serial = item->data(Qt::UserRole).toString();
+    const QString serial = item->data(Qt::UserRole).toString();
     if (!serial.isEmpty()) {
         connectToDevice(serial);
     }
@@ -359,16 +337,16 @@ void MainWindow::onScanDevices()
 {
     if (m_deviceDiscovery->isScanning()) {
         m_deviceDiscovery->stopScan();
-        m_scanBtn->setText("🔍 扫描无线设备");
+        m_scanBtn->setText("Scan Wireless Devices");
         m_scanProgress->setVisible(false);
+        m_statusLabel->setText("Scan stopped");
         return;
     }
-    
-    m_scanBtn->setText("停止扫描");
+
+    m_scanBtn->setText("Stop Scan");
     m_scanProgress->setVisible(true);
     m_scanProgress->setValue(0);
-    m_statusLabel->setText("正在扫描局域网设备...");
-    
+    m_statusLabel->setText("Scanning current subnet for wireless ADB devices...");
     m_deviceDiscovery->startScan();
 }
 
@@ -380,38 +358,39 @@ void MainWindow::onScanProgress(int current, int total)
 
 void MainWindow::onScanFinished(const QList<DiscoveredDevice>& devices)
 {
-    m_scanBtn->setText("🔍 扫描无线设备");
+    m_scanBtn->setText("Scan Wireless Devices");
     m_scanProgress->setVisible(false);
-    
+
     if (devices.isEmpty()) {
-        m_statusLabel->setText("未发现无线设备");
-        QMessageBox::information(this, "扫描完成", "未发现可连接的无线设备。\n\n请确保：\n1. 手机和电脑在同一WiFi网络\n2. 手机已启用无线调试或通过USB执行过 adb tcpip 5555");
-    } else {
-        m_statusLabel->setText(QString("发现 %1 个设备").arg(devices.size()));
-        
-        // 自动连接发现的设备
-        for (const DiscoveredDevice& device : devices) {
-            m_deviceManager->connectWirelessDevice(device.ip, device.port);
-        }
+        m_statusLabel->setText("No wireless device found on the current subnet");
+        return;
+    }
+
+    m_statusLabel->setText(QString("Found %1 wireless device(s)").arg(devices.size()));
+
+    for (const DiscoveredDevice& device : devices) {
+        m_deviceManager->connectWirelessDevice(device.ip, device.port);
     }
 }
 
 void MainWindow::onConnectDevice()
 {
-    QString ip = m_ipInput->text().trimmed();
+    const QString ip = m_ipInput->text().trimmed();
     if (ip.isEmpty()) {
-        QMessageBox::warning(this, "输入错误", "请输入IP地址");
+        QMessageBox::warning(this, "Input Error", "Please enter a phone IP address.");
         return;
     }
-    
-    m_statusLabel->setText("正在连接 " + ip + "...");
-    
+
+    m_statusLabel->setText("Connecting to " + ip + " ...");
     if (m_deviceManager->connectWirelessDevice(ip)) {
-        m_statusLabel->setText("连接成功");
+        m_statusLabel->setText("Connected");
         m_ipInput->clear();
     } else {
-        m_statusLabel->setText("连接失败");
-        QMessageBox::warning(this, "连接失败", "无法连接到 " + ip + "\n\n请确保设备已启用无线调试。");
+        m_statusLabel->setText("Connection failed");
+        QMessageBox::warning(
+            this,
+            "Connection Failed",
+            "Unable to connect to " + ip + "\n\nPlease ensure wireless debugging is enabled.");
     }
 }
 
@@ -426,23 +405,21 @@ void MainWindow::connectToDevice(const QString& serial)
     if (m_isConnected) {
         disconnectFromDevice();
     }
-    
+
     m_currentSerial = serial;
-    m_statusLabel->setText("正在连接 " + serial + "...");
-    
-    // 创建设备相关组件
+    m_statusLabel->setText("Connecting to " + serial + " ...");
+
     m_fileTransfer = new FileTransfer(serial, this);
     m_shortcuts = new Shortcuts(serial, this);
     m_volumeController = new VolumeController(serial, this);
-    
+
     connect(m_fileTransfer, &FileTransfer::transferStarted,
             this, &MainWindow::onTransferStarted);
     connect(m_fileTransfer, &FileTransfer::transferProgress,
             this, &MainWindow::onTransferProgress);
     connect(m_fileTransfer, &FileTransfer::transferCompleted,
             this, &MainWindow::onTransferCompleted);
-    
-    // 启动服务端
+
     m_serverManager->setSerial(serial);
     m_serverManager->start();
 }
@@ -452,41 +429,41 @@ void MainWindow::disconnectFromDevice()
     if (!m_isConnected && m_currentSerial.isEmpty()) {
         return;
     }
-    
-    // 恢复音量
+
+    m_clipboardManager->stopSync();
+
     if (m_volumeController) {
         m_volumeController->restore();
     }
-    
-    // 断开视频流
+
     m_videoStream->disconnect();
     m_controlStream->disconnect();
-    
-    // 停止服务端
     m_serverManager->stop();
-    
-    // 清理组件
+
     delete m_fileTransfer;
     m_fileTransfer = nullptr;
-    
+
     delete m_shortcuts;
     m_shortcuts = nullptr;
-    
+
     delete m_volumeController;
     m_volumeController = nullptr;
-    
+
     m_currentSerial.clear();
     m_isConnected = false;
-    
     m_toolbar->setConnected(false);
-    m_statusLabel->setText("已断开连接");
+    m_statusLabel->setText("Disconnected");
 }
 
 void MainWindow::showDeviceList()
 {
     m_stackedWidget->setCurrentWidget(m_deviceListPage);
-    setWindowTitle("QtScrcpy - 安卓投屏");
+    setWindowTitle("QtScrcpy - Android Mirroring");
     resize(400, 700);
+
+    QTimer::singleShot(600, this, [this]() {
+        triggerAutoWirelessScan(false);
+    });
 }
 
 void MainWindow::showVideoView()
@@ -494,81 +471,110 @@ void MainWindow::showVideoView()
     m_stackedWidget->setCurrentWidget(m_videoPage);
 }
 
+void MainWindow::triggerAutoWirelessScan(bool force)
+{
+    if (!m_autoScanEnabled || m_isConnected) {
+        return;
+    }
+    if (m_stackedWidget->currentWidget() != m_deviceListPage) {
+        return;
+    }
+    if (m_deviceDiscovery->isScanning()) {
+        return;
+    }
+
+    if (!force) {
+        const QList<DeviceInfo> devices = m_deviceManager->getDevices();
+        bool hasWireless = false;
+        for (const DeviceInfo& d : devices) {
+            if (d.isWireless) {
+                hasWireless = true;
+                break;
+            }
+        }
+        if (hasWireless) {
+            return;
+        }
+    }
+
+    m_scanBtn->setText("Stop Scan");
+    m_scanProgress->setVisible(true);
+    m_scanProgress->setValue(0);
+    m_statusLabel->setText("Auto scanning Wi-Fi subnet...");
+    m_deviceDiscovery->startScan();
+}
+
 void MainWindow::onServerStateChanged(ServerManager::ServerState state)
 {
     switch (state) {
-        case ServerManager::ServerState::Pushing:
-            m_statusLabel->setText("正在推送服务端...");
-            break;
-        case ServerManager::ServerState::Starting:
-            m_statusLabel->setText("正在启动服务端...");
-            break;
-        case ServerManager::ServerState::Running:
-            m_statusLabel->setText("服务端运行中");
-            break;
-        case ServerManager::ServerState::Error:
-            m_statusLabel->setText("服务端错误");
-            break;
-        default:
-            break;
+    case ServerManager::ServerState::Pushing:
+        m_statusLabel->setText("Pushing server to device...");
+        break;
+    case ServerManager::ServerState::Starting:
+        m_statusLabel->setText("Starting server...");
+        break;
+    case ServerManager::ServerState::Running:
+        m_statusLabel->setText("Server running");
+        break;
+    case ServerManager::ServerState::Error:
+        m_statusLabel->setText("Server error");
+        break;
+    default:
+        break;
     }
 }
 
 void MainWindow::onServerReady(int videoPort, int controlPort)
 {
     qDebug() << "Server ready, connecting to ports:" << videoPort << controlPort;
-    
-    // 连接视频流
+
     if (!m_videoStream->connectToHost("127.0.0.1", videoPort)) {
-        QMessageBox::critical(this, "连接失败", "无法连接到视频流");
+        QMessageBox::critical(this, "Connection Failed", "Unable to connect to video stream.");
         disconnectFromDevice();
         return;
     }
-    
-    // 连接控制流
+
     if (!m_controlStream->connectToHost("127.0.0.1", controlPort)) {
-        QMessageBox::critical(this, "连接失败", "无法连接到控制流");
+        QMessageBox::critical(this, "Connection Failed", "Unable to connect to control stream.");
         disconnectFromDevice();
         return;
     }
-    
-    // 设置输入处理器
+
     m_inputHandler->setControlStream(m_controlStream);
     m_videoWidget->setInputHandler(m_inputHandler);
-    
-    // 设置剪贴板
+
     m_clipboardManager->setControlStream(m_controlStream);
     m_clipboardManager->startSync();
-    
-    // 静音手机
-    m_volumeController->saveAndMute();
-    
+
+    if (m_volumeController) {
+        m_volumeController->saveAndMute();
+    }
+
     m_isConnected = true;
     m_toolbar->setConnected(true);
-    
     showVideoView();
 }
 
 void MainWindow::onServerError(const QString& message)
 {
-    QMessageBox::critical(this, "服务端错误", message);
+    QMessageBox::critical(this, "Server Error", message);
     disconnectFromDevice();
     showDeviceList();
 }
 
 void MainWindow::onVideoConnected()
 {
-    m_statusLabel->setText("视频流已连接");
+    m_statusLabel->setText("Video stream connected");
 }
 
 void MainWindow::onVideoDisconnected()
 {
-    m_statusLabel->setText("视频流已断开");
-    
+    m_statusLabel->setText("Video stream disconnected");
+
     if (m_isConnected) {
         disconnectFromDevice();
         showDeviceList();
-        QMessageBox::warning(this, "连接断开", "与设备的连接已断开");
+        QMessageBox::warning(this, "Disconnected", "The connection to the device has been lost.");
     }
 }
 
@@ -580,12 +586,10 @@ void MainWindow::onFrameReady(const QImage& frame)
 void MainWindow::onDeviceInfoReceived(const QString& deviceName, int width, int height)
 {
     setWindowTitle(QString("QtScrcpy - %1").arg(deviceName));
-    m_resolutionLabel->setText(QString("%1×%2").arg(width).arg(height));
-    
+    m_resolutionLabel->setText(QString("%1 x %2").arg(width).arg(height));
+
     m_inputHandler->setDeviceScreenSize(QSize(width, height));
     m_videoWidget->setDeviceScreenSize(QSize(width, height));
-    
-    // 调整窗口大小
     m_videoWidget->resizeToFit();
 }
 
@@ -599,7 +603,6 @@ void MainWindow::onVideoDoubleClicked()
     onFullscreenClicked();
 }
 
-// 工具栏操作
 void MainWindow::onHomeClicked()
 {
     if (m_shortcuts) m_shortcuts->pressHome();
@@ -675,30 +678,29 @@ void MainWindow::onShortcutTriggered(const QString& action)
     else if (action == "resize_to_screen") m_videoWidget->resizeToOriginal();
 }
 
-// 文件传输
 void MainWindow::onFilesDropped(const QStringList& paths)
 {
     if (!m_fileTransfer) {
         return;
     }
-    
-    int count = m_fileTransfer->handleDroppedFiles(paths);
-    m_statusLabel->setText(QString("正在处理 %1 个文件...").arg(count));
+
+    const int count = m_fileTransfer->handleDroppedFiles(paths);
+    m_statusLabel->setText(QString("Processing %1 file(s)...").arg(count));
 }
 
 void MainWindow::onTransferStarted(const QString& fileName, bool isApk)
 {
     if (isApk) {
-        m_statusLabel->setText(QString("正在安装: %1").arg(fileName));
+        m_statusLabel->setText(QString("Installing: %1").arg(fileName));
     } else {
-        m_statusLabel->setText(QString("正在传输: %1").arg(fileName));
+        m_statusLabel->setText(QString("Transferring: %1").arg(fileName));
     }
 }
 
 void MainWindow::onTransferProgress(const QString& fileName, int percent)
 {
     Q_UNUSED(fileName)
-    m_statusLabel->setText(QString("传输中... %1%").arg(percent));
+    m_statusLabel->setText(QString("Transfer progress: %1%").arg(percent));
 }
 
 void MainWindow::onTransferCompleted(const QString& fileName, bool success, const QString& message)
@@ -706,6 +708,6 @@ void MainWindow::onTransferCompleted(const QString& fileName, bool success, cons
     if (success) {
         m_statusLabel->setText(QString("%1: %2").arg(fileName).arg(message));
     } else {
-        QMessageBox::warning(this, "传输失败", QString("%1: %2").arg(fileName).arg(message));
+        QMessageBox::warning(this, "Transfer Failed", QString("%1: %2").arg(fileName).arg(message));
     }
 }

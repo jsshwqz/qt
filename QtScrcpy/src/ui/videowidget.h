@@ -13,6 +13,9 @@
 #include <QSize>
 #include <QTimer>
 #include <QMutex>
+#include <QVariant>
+
+class QInputMethodEvent;
 
 class InputHandler;
 
@@ -110,6 +113,8 @@ protected:
     void wheelEvent(QWheelEvent* event) override;
     void keyPressEvent(QKeyEvent* event) override;
     void keyReleaseEvent(QKeyEvent* event) override;
+    void inputMethodEvent(QInputMethodEvent* event) override;
+    QVariant inputMethodQuery(Qt::InputMethodQuery query) const override;
     void dragEnterEvent(QDragEnterEvent* event) override;
     void dragMoveEvent(QDragMoveEvent* event) override;
     void dropEvent(QDropEvent* event) override;

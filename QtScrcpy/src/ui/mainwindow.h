@@ -13,6 +13,7 @@
 #include <QLabel>
 #include <QProgressBar>
 #include <QStackedWidget>
+#include <QTimer>
 
 #include "adb/devicemanager.h"
 #include "server/servermanager.h"
@@ -27,6 +28,8 @@ class FileTransfer;
 class Shortcuts;
 class VolumeController;
 class DeviceDiscovery;
+class QPushButton;
+class QLineEdit;
 
 /**
  * @brief 主窗口
@@ -98,6 +101,7 @@ private:
     void disconnectFromDevice();
     void showDeviceList();
     void showVideoView();
+    void triggerAutoWirelessScan(bool force = false);
     void updateStatusBar();
     
     // UI组件
@@ -136,6 +140,8 @@ private:
     // 状态
     QString m_currentSerial;
     bool m_isConnected;
+    QTimer* m_autoScanTimer;
+    bool m_autoScanEnabled;
 };
 
 #endif // MAINWINDOW_H
