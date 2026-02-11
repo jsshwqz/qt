@@ -143,17 +143,17 @@ jobs:
             }
           }
 
-          $runDebug = @"
-@echo off
-setlocal
-cd /d %~dp0
-echo === QtScrcpy debug run ===> log.txt
-echo %date% %time%>> log.txt
-QtScrcpy.exe 1>> log.txt 2>>&1
-echo ExitCode=%errorlevel%>> log.txt
-pause
-"@
-          Set-Content -Path (Join-Path $pkgDir "run_debug.bat") -Value $runDebug -Encoding ASCII
+          $runDebugLines = @(
+            '@echo off'
+            'setlocal'
+            'cd /d %~dp0'
+            'echo === QtScrcpy debug run ===> log.txt'
+            'echo %date% %time%>> log.txt'
+            'QtScrcpy.exe 1>> log.txt 2>>&1'
+            'echo ExitCode=%errorlevel%>> log.txt'
+            'pause'
+          )
+          Set-Content -Path (Join-Path $pkgDir "run_debug.bat") -Value $runDebugLines -Encoding ASCII
 
           $buildInfo = @(
             "GitHub Repo: $env:GITHUB_REPOSITORY"
