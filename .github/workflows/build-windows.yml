@@ -57,8 +57,53 @@ jobs:
 
           windeployqt --release --compiler-runtime $exe
 
-          New-Item -ItemType Directory -Force -Path (Join-Path $outDir "adb") | Out-Null
-          Copy-Item "QtScrcpy/third_party/adb/*" (Join-Path $outDir "adb") -Recurse -Force
+          # ADB runtime (adb.exe + required DLLs)
+          $adbDir = Join-Path $outDir "adb"
+          New-Item -ItemType Directory -Force -Path $adbDir | Out-Null
+
+          if (Test-Path "QtScrcpy/third_party/adb") {
+            Copy-Item "QtScrcpy/third_party/adb/*" $adbDir -Recurse -Force -ErrorAction SilentlyContinue
+          }
+
+          $adbExe = Join-Path $adbDir "adb.exe"
+          if (!(Test-Path $adbExe)) {
+            $adbZipUrl = "https://github.com/Genymobile/scrcpy/releases/download/v2.4/scrcpy-win64-v2.4.zip"
+            Write-Host "adb.exe not found in repo. Downloading ADB from scrcpy package: $adbZipUrl"
+
+            $tmpAdbDir = Join-Path $env:RUNNER_TEMP "scrcpy-adb"
+            if (Test-Path $tmpAdbDir) {
+              Remove-Item $tmpAdbDir -Recurse -Force
+            }
+            New-Item -ItemType Directory -Force -Path $tmpAdbDir | Out-Null
+
+            $zipPath = Join-Path $tmpAdbDir "scrcpy-win64.zip"
+            Invoke-WebRequest -Uri $adbZipUrl -OutFile $zipPath
+            Expand-Archive -Path $zipPath -DestinationPath $tmpAdbDir -Force
+
+            $foundAdb = Get-ChildItem -Path $tmpAdbDir -Recurse -Filter "adb.exe" -File | Select-Object -First 1
+            if (!$foundAdb) {
+              throw "Failed to find adb.exe in scrcpy package"
+            }
+            $scrcpyRoot = Split-Path $foundAdb.FullName -Parent
+            Write-Host "Using adb files from: $scrcpyRoot"
+
+            foreach ($name in @("adb.exe", "AdbWinApi.dll", "AdbWinUsbApi.dll")) {
+              $src = Join-Path $scrcpyRoot $name
+              if (!(Test-Path $src)) {
+                throw "Missing $name in scrcpy package at $scrcpyRoot"
+              }
+              Copy-Item $src $adbDir -Force
+            }
+          }
+
+          foreach ($name in @("adb.exe", "AdbWinApi.dll", "AdbWinUsbApi.dll")) {
+            $p = Join-Path $adbDir $name
+            if (!(Test-Path $p)) {
+              throw "ADB file missing in output directory: adb/$name"
+            }
+          }
+          Write-Host "ADB files present:"
+          Get-ChildItem -Path $adbDir -File | Select-Object Name,Length | Format-Table -AutoSize
           Copy-Item "QtScrcpy/resources/scrcpy-server" (Join-Path $outDir "scrcpy-server") -Force
 
           # FFmpeg runtime (DLLs)
@@ -165,6 +210,8 @@ jobs:
             'cd /d %~dp0'
             'echo === QtScrcpy debug run ===> log.txt'
             'echo %date% %time%>> log.txt'
+            'echo --- adb version --- >> log.txt'
+            'if exist adb\\adb.exe (adb\\adb.exe version 1>> log.txt 2>>&1) else (echo adb\\adb.exe missing>> log.txt)'
             'set QT_DEBUG_PLUGINS=1'
             'set QT_LOGGING_TO_CONSOLE=1'
             'QtScrcpy.exe 1>> log.txt 2>>&1'
