@@ -9,12 +9,11 @@ on:
       - "QtScrcpy/**"
       - ".github/workflows/build-windows.yml"
 
-permissions:
-  contents: write
-
 jobs:
   build-windows:
     runs-on: windows-latest
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout
@@ -62,20 +61,72 @@ jobs:
           Copy-Item "QtScrcpy/third_party/adb/*" (Join-Path $outDir "adb") -Recurse -Force
           Copy-Item "QtScrcpy/resources/scrcpy-server" (Join-Path $outDir "scrcpy-server") -Force
 
+          $dlls = @("avcodec-58.dll", "avformat-58.dll", "avutil-56.dll", "swscale-5.dll", "swresample-3.dll")
+
+          function Copy-FfmpegDllsFromDir([string]$srcDir, [string]$dstDir, [string[]]$names) {
+            foreach ($dll in $names) {
+              $src = Join-Path $srcDir $dll
+              if (Test-Path $src) {
+                Copy-Item $src $dstDir -Force
+              }
+            }
+          }
+
           if (Test-Path "QtScrcpy/third_party/ffmpeg/bin") {
             Copy-Item "QtScrcpy/third_party/ffmpeg/bin/*" $outDir -Force
           } else {
             $fallback = "QtScrcpy-Release/QtScrcpy-win-x64-v3.3.3"
             if (Test-Path $fallback) {
-              $dlls = @("avcodec-58.dll", "avformat-58.dll", "avutil-56.dll", "swscale-5.dll", "swresample-3.dll")
-              foreach ($dll in $dlls) {
-                $src = Join-Path $fallback $dll
-                if (Test-Path $src) {
-                  Copy-Item $src $outDir -Force
-                }
-              }
+              Copy-FfmpegDllsFromDir -srcDir $fallback -dstDir $outDir -names $dlls
             }
           }
+
+          $missing = @()
+          foreach ($dll in $dlls) {
+            if (!(Test-Path (Join-Path $outDir $dll))) {
+              $missing += $dll
+            }
+          }
+
+          if ($missing.Count -gt 0) {
+            $scrcpyUrl = "https://github.com/Genymobile/scrcpy/releases/download/v1.17/scrcpy-win64-v1.17.zip"
+            Write-Host "FFmpeg DLLs missing after local copy: $($missing -join ', ')"
+            Write-Host "Downloading scrcpy package for FFmpeg DLLs: $scrcpyUrl"
+
+            $tmpDir = Join-Path $env:RUNNER_TEMP "scrcpy-win64-v1.17"
+            if (Test-Path $tmpDir) {
+              Remove-Item $tmpDir -Recurse -Force
+            }
+            New-Item -ItemType Directory -Force -Path $tmpDir | Out-Null
+
+            $zipPath = Join-Path $tmpDir "scrcpy-win64-v1.17.zip"
+            Invoke-WebRequest -Uri $scrcpyUrl -OutFile $zipPath
+            Expand-Archive -Path $zipPath -DestinationPath $tmpDir -Force
+
+            $avcodec = Get-ChildItem -Path $tmpDir -Recurse -Filter "avcodec-58.dll" -File | Select-Object -First 1
+            if (!$avcodec) {
+              throw "Failed to find avcodec-58.dll in scrcpy package"
+            }
+            $ffmpegDir = Split-Path $avcodec.FullName -Parent
+            Write-Host "Using FFmpeg DLL directory: $ffmpegDir"
+
+            foreach ($dll in $dlls) {
+              $src = Join-Path $ffmpegDir $dll
+              if (!(Test-Path $src)) {
+                throw "Missing $dll inside scrcpy package at $ffmpegDir"
+              }
+              Copy-Item $src $outDir -Force
+            }
+          }
+
+          foreach ($dll in $dlls) {
+            $p = Join-Path $outDir $dll
+            if (!(Test-Path $p)) {
+              throw "FFmpeg DLL missing in output directory: $dll"
+            }
+          }
+          Write-Host "FFmpeg DLLs present in build output:"
+          Get-ChildItem -Path $outDir -Filter "av*.dll" | Select-Object Name,Length
 
           $releaseDir = Join-Path (Resolve-Path ".").Path "release"
           New-Item -ItemType Directory -Force -Path $releaseDir | Out-Null
@@ -85,6 +136,33 @@ jobs:
           }
           New-Item -ItemType Directory -Force -Path $pkgDir | Out-Null
           Copy-Item "$outDir/*" $pkgDir -Recurse -Force
+
+          foreach ($dll in $dlls) {
+            if (!(Test-Path (Join-Path $pkgDir $dll))) {
+              throw "FFmpeg DLL missing in package directory: $dll"
+            }
+          }
+
+          $runDebug = @"
+@echo off
+setlocal
+cd /d %~dp0
+echo === QtScrcpy debug run ===> log.txt
+echo %date% %time%>> log.txt
+QtScrcpy.exe 1>> log.txt 2>>&1
+echo ExitCode=%errorlevel%>> log.txt
+pause
+"@
+          Set-Content -Path (Join-Path $pkgDir "run_debug.bat") -Value $runDebug -Encoding ASCII
+
+          $buildInfo = @(
+            "GitHub Repo: $env:GITHUB_REPOSITORY"
+            "GitHub SHA:  $env:GITHUB_SHA"
+            "Run ID:      $env:GITHUB_RUN_ID"
+            "Run Number:  $env:GITHUB_RUN_NUMBER"
+            "Built At:    $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss K')"
+          ) -join "`r`n"
+          Set-Content -Path (Join-Path $pkgDir "BUILD_INFO.txt") -Value $buildInfo -Encoding ASCII
 
           $zipPath = Join-Path $releaseDir "QtScrcpy-win-x64.zip"
           if (Test-Path $zipPath) {
@@ -99,16 +177,28 @@ jobs:
           path: |
             release/QtScrcpy-win-x64.zip
             release/QtScrcpy-win-x64/**
+
       - name: Publish asset to tagged release
         if: github.ref == 'refs/heads/main'
+        shell: powershell
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          $code = 1
-          for ($i=0; $i -lt 3; $i++) {
-            gh release upload v3.0.0-delivery-20260210 release/QtScrcpy-win-x64.zip --clobber
-            $code = $LASTEXITCODE
-            if ($code -eq 0) { break }
-            Start-Sleep -Seconds 5
+          $tag = "v3.0.0-delivery-20260210"
+          $asset = "release/QtScrcpy-win-x64.zip"
+          $max = 5
+
+          for ($i = 1; $i -le $max; $i++) {
+            Write-Host "Uploading release asset (attempt $i/$max): $asset"
+            gh release upload $tag $asset --clobber
+            if ($LASTEXITCODE -eq 0) {
+              Write-Host "Upload succeeded."
+              exit 0
+            }
+
+            if ($i -eq $max) {
+              throw "gh release upload failed after $max attempts (exit code: $LASTEXITCODE)"
+            }
+
+            Start-Sleep -Seconds (5 * $i)
           }
-          if ($code -ne 0) { exit $code }
