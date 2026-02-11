@@ -61,9 +61,21 @@ jobs:
           Copy-Item "QtScrcpy/third_party/adb/*" (Join-Path $outDir "adb") -Recurse -Force
           Copy-Item "QtScrcpy/resources/scrcpy-server" (Join-Path $outDir "scrcpy-server") -Force
 
-          $dlls = @("avcodec-58.dll", "avformat-58.dll", "avutil-56.dll", "swscale-5.dll", "swresample-3.dll")
+          # FFmpeg runtime (DLLs)
+          #
+          # The project links to the import libs in QtScrcpy/third_party/ffmpeg/lib, which
+          # require the corresponding FFmpeg shared DLLs to be placed next to QtScrcpy.exe.
+          $ffmpegDlls = @(
+            "avcodec-62.dll",
+            "avdevice-62.dll",
+            "avfilter-11.dll",
+            "avformat-62.dll",
+            "avutil-60.dll",
+            "swresample-6.dll",
+            "swscale-9.dll"
+          )
 
-          function Copy-FfmpegDllsFromDir([string]$srcDir, [string]$dstDir, [string[]]$names) {
+          function Copy-DllsFromDir([string]$srcDir, [string]$dstDir, [string[]]$names) {
             foreach ($dll in $names) {
               $src = Join-Path $srcDir $dll
               if (Test-Path $src) {
@@ -73,60 +85,64 @@ jobs:
           }
 
           if (Test-Path "QtScrcpy/third_party/ffmpeg/bin") {
-            Copy-Item "QtScrcpy/third_party/ffmpeg/bin/*" $outDir -Force
-          } else {
-            $fallback = "QtScrcpy-Release/QtScrcpy-win-x64-v3.3.3"
-            if (Test-Path $fallback) {
-              Copy-FfmpegDllsFromDir -srcDir $fallback -dstDir $outDir -names $dlls
-            }
+            Copy-DllsFromDir -srcDir "QtScrcpy/third_party/ffmpeg/bin" -dstDir $outDir -names $ffmpegDlls
           }
 
           $missing = @()
-          foreach ($dll in $dlls) {
+          foreach ($dll in $ffmpegDlls) {
             if (!(Test-Path (Join-Path $outDir $dll))) {
               $missing += $dll
             }
           }
 
           if ($missing.Count -gt 0) {
-            $scrcpyUrl = "https://github.com/Genymobile/scrcpy/releases/download/v1.17/scrcpy-win64-v1.17.zip"
+            $ffmpegUrl = "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl-shared.zip"
             Write-Host "FFmpeg DLLs missing after local copy: $($missing -join ', ')"
-            Write-Host "Downloading scrcpy package for FFmpeg DLLs: $scrcpyUrl"
+            Write-Host "Downloading FFmpeg shared build: $ffmpegUrl"
 
-            $tmpDir = Join-Path $env:RUNNER_TEMP "scrcpy-win64-v1.17"
+            $tmpDir = Join-Path $env:RUNNER_TEMP "ffmpeg-shared"
             if (Test-Path $tmpDir) {
               Remove-Item $tmpDir -Recurse -Force
             }
             New-Item -ItemType Directory -Force -Path $tmpDir | Out-Null
 
-            $zipPath = Join-Path $tmpDir "scrcpy-win64-v1.17.zip"
-            Invoke-WebRequest -Uri $scrcpyUrl -OutFile $zipPath
+            $zipPath = Join-Path $tmpDir "ffmpeg.zip"
+            Invoke-WebRequest -Uri $ffmpegUrl -OutFile $zipPath
             Expand-Archive -Path $zipPath -DestinationPath $tmpDir -Force
 
-            $avcodec = Get-ChildItem -Path $tmpDir -Recurse -Filter "avcodec-58.dll" -File | Select-Object -First 1
+            $avcodec = Get-ChildItem -Path $tmpDir -Recurse -Filter "avcodec-62.dll" -File | Select-Object -First 1
             if (!$avcodec) {
-              throw "Failed to find avcodec-58.dll in scrcpy package"
+              throw "Failed to find avcodec-62.dll in FFmpeg build"
             }
-            $ffmpegDir = Split-Path $avcodec.FullName -Parent
-            Write-Host "Using FFmpeg DLL directory: $ffmpegDir"
+            $ffmpegBinDir = Split-Path $avcodec.FullName -Parent
+            Write-Host "Using FFmpeg DLL directory: $ffmpegBinDir"
 
-            foreach ($dll in $dlls) {
-              $src = Join-Path $ffmpegDir $dll
+            # Copy required FFmpeg core DLLs.
+            foreach ($dll in $ffmpegDlls) {
+              $src = Join-Path $ffmpegBinDir $dll
               if (!(Test-Path $src)) {
-                throw "Missing $dll inside scrcpy package at $ffmpegDir"
+                throw "Missing $dll inside FFmpeg build at $ffmpegBinDir"
               }
               Copy-Item $src $outDir -Force
             }
+
+            # Also copy any extra DLLs in the same directory (codec deps, etc.) to avoid 0xC0000135.
+            Get-ChildItem -Path $ffmpegBinDir -Filter "*.dll" -File |
+              ForEach-Object { Copy-Item $_.FullName $outDir -Force }
           }
 
-          foreach ($dll in $dlls) {
+          foreach ($dll in $ffmpegDlls) {
             $p = Join-Path $outDir $dll
             if (!(Test-Path $p)) {
               throw "FFmpeg DLL missing in output directory: $dll"
             }
           }
           Write-Host "FFmpeg DLLs present in build output:"
-          Get-ChildItem -Path $outDir -Filter "av*.dll" | Select-Object Name,Length
+          foreach ($dll in $ffmpegDlls) {
+            $p = Join-Path $outDir $dll
+            $fi = Get-Item $p
+            Write-Host "$($fi.Name) $($fi.Length)"
+          }
 
           $releaseDir = Join-Path (Resolve-Path ".").Path "release"
           New-Item -ItemType Directory -Force -Path $releaseDir | Out-Null
@@ -137,7 +153,7 @@ jobs:
           New-Item -ItemType Directory -Force -Path $pkgDir | Out-Null
           Copy-Item "$outDir/*" $pkgDir -Recurse -Force
 
-          foreach ($dll in $dlls) {
+          foreach ($dll in $ffmpegDlls) {
             if (!(Test-Path (Join-Path $pkgDir $dll))) {
               throw "FFmpeg DLL missing in package directory: $dll"
             }
@@ -149,6 +165,8 @@ jobs:
             'cd /d %~dp0'
             'echo === QtScrcpy debug run ===> log.txt'
             'echo %date% %time%>> log.txt'
+            'set QT_DEBUG_PLUGINS=1'
+            'set QT_LOGGING_TO_CONSOLE=1'
             'QtScrcpy.exe 1>> log.txt 2>>&1'
             'echo ExitCode=%errorlevel%>> log.txt'
             'pause'
