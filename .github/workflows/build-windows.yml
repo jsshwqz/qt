@@ -104,6 +104,17 @@ jobs:
           }
           Write-Host "ADB files present:"
           Get-ChildItem -Path $adbDir -File | Select-Object Name,Length | Format-Table -AutoSize
+
+          # Verify ADB can run (avoid shipping a package that can't connect USB/WiFi).
+          $adbText = (& $adbExe version 2>&1 | Out-String)
+          if ($LASTEXITCODE -ne 0) {
+            throw "adb.exe failed to run (exit $LASTEXITCODE). Output: $adbText"
+          }
+          if ($adbText -notmatch "Android Debug Bridge") {
+            throw "Unexpected adb.exe output. Output: $adbText"
+          }
+          Write-Host "adb.exe verified:"
+          Write-Host $adbText
           Copy-Item "QtScrcpy/resources/scrcpy-server" (Join-Path $outDir "scrcpy-server") -Force
 
           # FFmpeg runtime (DLLs)
