@@ -335,6 +335,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          $PSNativeCommandUseErrorActionPreference = $false
           $dateTag = (Get-Date).ToUniversalTime().ToString("yyyyMMdd")
           $dateText = (Get-Date).ToUniversalTime().ToString("yyyy-MM-dd")
           $tag = "v3.0.0-delivery-$dateTag"
@@ -349,7 +350,7 @@ jobs:
             "- Run Number: $env:GITHUB_RUN_NUMBER"
           ) -join "`n"
 
-          gh release view $tag *> $null
+          gh release view $tag --json tagName 1>$null 2>$null
           if ($LASTEXITCODE -ne 0) {
             Write-Host "Release tag does not exist, creating: $tag"
             for ($i = 1; $i -le $max; $i++) {
