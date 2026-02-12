@@ -142,6 +142,7 @@ private:
     bool m_isConnected;
     QTimer* m_autoScanTimer;
     bool m_autoScanEnabled;
+    bool m_autoScanPausedByUser;
 };
 
 #endif // MAINWINDOW_H

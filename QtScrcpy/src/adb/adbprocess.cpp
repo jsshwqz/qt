@@ -9,14 +9,52 @@
 #include <QCoreApplication>
 #include <QRegularExpression>
 #include <QFileInfo>
+#include <QDir>
+#include <QStandardPaths>
 #include <QDebug>
+
+namespace {
+QString adbExecutableName()
+{
+#ifdef Q_OS_WIN
+    return "adb.exe";
+#else
+    return "adb";
+#endif
+}
+}
+
+QString AdbProcess::resolveAdbPath()
+{
+    const QString adbName = adbExecutableName();
+    const QDir appDir(QCoreApplication::applicationDirPath());
+    const QStringList candidatePaths = {
+        appDir.filePath("adb/" + adbName),
+        appDir.filePath(adbName),
+        appDir.filePath("platform-tools/" + adbName)
+    };
+
+    for (const QString& path : candidatePaths) {
+        const QFileInfo info(path);
+        if (info.exists() && info.isFile()) {
+            return info.absoluteFilePath();
+        }
+    }
+
+    const QString fromPath = QStandardPaths::findExecutable(adbName);
+    if (!fromPath.isEmpty()) {
+        return fromPath;
+    }
+
+    return candidatePaths.first();
+}
 
 AdbProcess::AdbProcess(QObject *parent)
     : QObject(parent)
     , m_process(new QProcess(this))
 {
     // 设置默认ADB路径
-    m_adbPath = QCoreApplication::applicationDirPath() + "/adb/adb.exe";
+    m_adbPath = resolveAdbPath();
     
     // 连接信号
     connect(m_process, &QProcess::finished, 
@@ -36,7 +74,8 @@ AdbProcess::~AdbProcess()
 
 void AdbProcess::setAdbPath(const QString& path)
 {
-    m_adbPath = path;
+    const QString trimmedPath = path.trimmed();
+    m_adbPath = trimmedPath.isEmpty() ? resolveAdbPath() : trimmedPath;
 }
 
 bool AdbProcess::checkAdbVersion()
@@ -84,7 +123,7 @@ AdbProcess::AdbResult AdbProcess::execute(const QStringList& args, int timeoutMs
     m_process->start(m_adbPath, args);
     
     if (!m_process->waitForStarted(5000)) {
-        result.error = "Failed to start ADB process";
+        result.error = QString("Failed to start ADB process: %1").arg(m_adbPath);
         return result;
     }
     

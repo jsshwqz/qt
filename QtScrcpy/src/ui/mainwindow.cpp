@@ -45,6 +45,7 @@ MainWindow::MainWindow(QWidget *parent)
     , m_isConnected(false)
     , m_autoScanTimer(new QTimer(this))
     , m_autoScanEnabled(true)
+    , m_autoScanPausedByUser(false)
 {
     setupUi();
     setupMenuBar();
@@ -337,12 +338,14 @@ void MainWindow::onScanDevices()
 {
     if (m_deviceDiscovery->isScanning()) {
         m_deviceDiscovery->stopScan();
+        m_autoScanPausedByUser = true;
         m_scanBtn->setText("Scan Wireless Devices");
         m_scanProgress->setVisible(false);
-        m_statusLabel->setText("Scan stopped");
+        m_statusLabel->setText("Scan stopped (auto scan paused)");
         return;
     }
 
+    m_autoScanPausedByUser = false;
     m_scanBtn->setText("Stop Scan");
     m_scanProgress->setVisible(true);
     m_scanProgress->setValue(0);
@@ -473,7 +476,12 @@ void MainWindow::showVideoView()
 
 void MainWindow::triggerAutoWirelessScan(bool force)
 {
+    Q_UNUSED(force)
+
     if (!m_autoScanEnabled || m_isConnected) {
+        return;
+    }
+    if (m_autoScanPausedByUser) {
         return;
     }
     if (m_stackedWidget->currentWidget() != m_deviceListPage) {
@@ -483,18 +491,16 @@ void MainWindow::triggerAutoWirelessScan(bool force)
         return;
     }
 
-    if (!force) {
-        const QList<DeviceInfo> devices = m_deviceManager->getDevices();
-        bool hasWireless = false;
-        for (const DeviceInfo& d : devices) {
-            if (d.isWireless) {
-                hasWireless = true;
-                break;
-            }
+    const QList<DeviceInfo> devices = m_deviceManager->getDevices();
+    bool hasWireless = false;
+    for (const DeviceInfo& d : devices) {
+        if (d.isWireless) {
+            hasWireless = true;
+            break;
         }
-        if (hasWireless) {
-            return;
-        }
+    }
+    if (hasWireless) {
+        return;
     }
 
     m_scanBtn->setText("Stop Scan");

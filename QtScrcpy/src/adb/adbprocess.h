@@ -24,6 +24,7 @@ class AdbProcess : public QObject
     Q_OBJECT
 
 public:
+    static QString resolveAdbPath();
     /**
      * @brief ADB命令执行结果
      */

@@ -7,9 +7,6 @@
 
 #include <QApplication>
 #include <QStyleFactory>
-#include <QFile>
-#include <QDir>
-#include <QStandardPaths>
 #include <QMessageBox>
 
 #include "ui/mainwindow.h"
@@ -178,22 +175,16 @@ void initializeStyle(QApplication& app)
 /**
  * @brief 濡偓閺岊檱DB閺勵垰鎯佺€涙ê婀?
  */
-bool checkAdbExists()
+bool checkAdbExists(QString* resolvedAdbPath = nullptr)
 {
-    QString adbPath = QCoreApplication::applicationDirPath() + "/adb/adb.exe";
-    
-    if (!QFile::exists(adbPath)) {
-        // 鐏忔繆鐦化鑽ょ埠PATH娑擃厾娈慳db
-        #ifdef Q_OS_WIN
-        adbPath = "adb.exe";
-        #else
-        adbPath = "adb";
-        #endif
+    const QString adbPath = AdbProcess::resolveAdbPath();
+    if (resolvedAdbPath) {
+        *resolvedAdbPath = adbPath;
     }
-    
+
     AdbProcess adb;
     adb.setAdbPath(adbPath);
-    
+
     return adb.checkAdbVersion();
 }
 
@@ -218,15 +209,22 @@ int main(int argc, char *argv[])
     initializeStyle(app);
     
     // 濡偓閺岊檱DB
-    if (!checkAdbExists()) {
+    QString detectedAdbPath;
+    if (!checkAdbExists(&detectedAdbPath)) {
+        const QString warningText = QString(
+            "ADB was not detected.\n\n"
+            "Please ensure one of the following:\n"
+            "1. adb/adb.exe exists next to the application.\n"
+            "2. adb.exe exists next to the application.\n"
+            "3. ADB is available in system PATH.\n\n"
+            "Resolved ADB path: %1\n\n"
+            "Some features may not be available until ADB is configured.")
+            .arg(detectedAdbPath);
+
         QMessageBox::warning(
             nullptr,
             "Warning",
-            "ADB was not detected.\n\n"
-            "Please ensure one of the following:\n"
-            "1. `adb/adb.exe` exists next to the application.\n"
-            "2. ADB is available in system PATH.\n\n"
-            "Some features may not be available until ADB is configured.");
+            warningText);
     }
     
     // 閸掓稑缂撴稉鑽ょ崶閸?

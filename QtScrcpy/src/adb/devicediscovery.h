@@ -126,6 +126,7 @@ private slots:
 
 private:
     bool isPreferredWirelessInterface(const QNetworkInterface& iface) const;
+    bool isIgnoredInterface(const QNetworkInterface& iface) const;
     void scanIp(const QString& ip, int port);
     
     bool m_isScanning;

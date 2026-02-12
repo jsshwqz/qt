@@ -102,8 +102,17 @@ jobs:
               throw "ADB file missing in output directory: adb/$name"
             }
           }
+          foreach ($name in @("adb.exe", "AdbWinApi.dll", "AdbWinUsbApi.dll")) {
+            Copy-Item (Join-Path $adbDir $name) (Join-Path $outDir $name) -Force
+            $rootPath = Join-Path $outDir $name
+            if (!(Test-Path $rootPath)) {
+              throw "ADB fallback file missing in output directory root: $name"
+            }
+          }
           Write-Host "ADB files present:"
           Get-ChildItem -Path $adbDir -File | Select-Object Name,Length | Format-Table -AutoSize
+          Write-Host "ADB fallback files present in root:"
+          Get-ChildItem -Path $outDir -File -Filter "adb*.exe" | Select-Object Name,Length | Format-Table -AutoSize
 
           # Verify ADB can run (avoid shipping a package that can't connect USB/WiFi).
           $adbText = (& $adbExe version 2>&1 | Out-String)
@@ -214,6 +223,11 @@ jobs:
               throw "FFmpeg DLL missing in package directory: $dll"
             }
           }
+          foreach ($name in @("adb\\adb.exe", "adb\\AdbWinApi.dll", "adb\\AdbWinUsbApi.dll", "adb.exe", "AdbWinApi.dll", "AdbWinUsbApi.dll")) {
+            if (!(Test-Path (Join-Path $pkgDir $name))) {
+              throw "ADB file missing in package directory: $name"
+            }
+          }
 
           $runDebugLines = @(
             '@echo off'
@@ -222,7 +236,7 @@ jobs:
             'echo === QtScrcpy debug run ===> log.txt'
             'echo %date% %time%>> log.txt'
             'echo --- adb version --- >> log.txt'
-            'if exist adb\\adb.exe (adb\\adb.exe version 1>> log.txt 2>>&1) else (echo adb\\adb.exe missing>> log.txt)'
+            'if exist adb\\adb.exe (adb\\adb.exe version 1>> log.txt 2>>&1) else (if exist adb.exe (adb.exe version 1>> log.txt 2>>&1) else (echo adb not found>> log.txt))'
             'set QT_DEBUG_PLUGINS=1'
             'set QT_LOGGING_TO_CONSOLE=1'
             'QtScrcpy.exe 1>> log.txt 2>>&1'

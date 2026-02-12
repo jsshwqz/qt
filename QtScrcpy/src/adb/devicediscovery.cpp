@@ -67,6 +67,33 @@ bool DeviceDiscovery::isPreferredWirelessInterface(const QNetworkInterface& ifac
         || name.contains("wireless");
 }
 
+bool DeviceDiscovery::isIgnoredInterface(const QNetworkInterface& iface) const
+{
+    const QString name = (iface.humanReadableName() + " " + iface.name()).toLower();
+    const QStringList ignoredKeywords = {
+        "virtual",
+        "vmware",
+        "vbox",
+        "hyper-v",
+        "docker",
+        "wsl",
+        "loopback",
+        "bluetooth",
+        "tailscale",
+        "zerotier",
+        "hamachi",
+        "npcap",
+        "tap"
+    };
+
+    for (const QString& keyword : ignoredKeywords) {
+        if (name.contains(keyword)) {
+            return true;
+        }
+    }
+    return false;
+}
+
 QStringList DeviceDiscovery::getLocalNetworkSegments() const
 {
     auto collectSegments = [this](bool wifiOnly) {
@@ -74,6 +101,9 @@ QStringList DeviceDiscovery::getLocalNetworkSegments() const
         const QList<QNetworkInterface> interfaces = QNetworkInterface::allInterfaces();
 
         for (const QNetworkInterface& iface : interfaces) {
+            if (isIgnoredInterface(iface)) {
+                continue;
+            }
             if (iface.flags() & QNetworkInterface::IsLoopBack) {
                 continue;
             }
@@ -88,12 +118,16 @@ QStringList DeviceDiscovery::getLocalNetworkSegments() const
             }
 
             const QList<QNetworkAddressEntry> entries = iface.addressEntries();
+            bool addedFromCurrentInterface = false;
             for (const QNetworkAddressEntry& entry : entries) {
                 const QHostAddress ip = entry.ip();
                 if (ip.protocol() != QAbstractSocket::IPv4Protocol) {
                     continue;
                 }
                 if (ip.isLoopback()) {
+                    continue;
+                }
+                if (ip.toString().startsWith("169.254.")) {
                     continue;
                 }
 
@@ -106,7 +140,14 @@ QStringList DeviceDiscovery::getLocalNetworkSegments() const
                     .arg(parts[0]).arg(parts[1]).arg(parts[2]);
                 if (!segments.contains(segment)) {
                     segments.append(segment);
+                    addedFromCurrentInterface = true;
                 }
+            }
+
+            // Prefer scanning the first active eligible interface to avoid
+            // expensive scans across unrelated adapters.
+            if (addedFromCurrentInterface && !segments.isEmpty()) {
+                return QStringList{segments.first()};
             }
         }
         return segments;
@@ -262,4 +303,3 @@ void DeviceDiscovery::onScanTimeout()
 {
     // Per-socket timeout is handled in scanIp().
 }
-
