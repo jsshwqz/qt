@@ -141,6 +141,7 @@ private:
     bool pushServer();
     bool setupPortForward();
     bool startServer();
+    bool tryHandleVersionMismatch(const QString& text);
     void setState(ServerState state);
     QStringList buildServerArgs() const;
     int findFreePort(int startPort = 27183);
@@ -155,6 +156,9 @@ private:
     
     int m_videoPort;
     int m_controlPort;
+    QString m_clientVersion;
+    int m_startAttemptId;
+    int m_versionRetryCount;
     
     static const QString SERVER_FILE_NAME;
     static const QString SERVER_PATH_ON_DEVICE;

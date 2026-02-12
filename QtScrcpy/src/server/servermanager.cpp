@@ -11,6 +11,7 @@
 #include <QFileInfo>
 #include <QTcpServer>
 #include <QDebug>
+#include <QRegularExpression>
 
 const QString ServerManager::SERVER_FILE_NAME = "scrcpy-server";
 const QString ServerManager::SERVER_PATH_ON_DEVICE = "/data/local/tmp/scrcpy-server.jar";
@@ -23,6 +24,9 @@ ServerManager::ServerManager(QObject *parent)
     , m_startTimer(new QTimer(this))
     , m_videoPort(0)
     , m_controlPort(0)
+    , m_clientVersion("2.4")
+    , m_startAttemptId(0)
+    , m_versionRetryCount(0)
 {
     m_startTimer->setSingleShot(true);
     m_startTimer->setInterval(10000); // 10绉掕秴鏃?
@@ -71,6 +75,9 @@ bool ServerManager::start()
         emit error("scrcpy server file not found");
         return false;
     }
+    m_clientVersion = "2.4";
+    m_startAttemptId = 0;
+    m_versionRetryCount = 0;
     
     // 寮€濮嬫帹閫佹湇鍔＄
     return pushServer();
@@ -152,7 +159,15 @@ bool ServerManager::setupPortForward()
 
 bool ServerManager::startServer()
 {
+    if (m_serverProcess) {
+        m_serverProcess->blockSignals(true);
+        m_serverProcess->kill();
+        m_serverProcess->waitForFinished(2000);
+        delete m_serverProcess;
+        m_serverProcess = nullptr;
+    }
     setState(ServerState::Starting);
+    const int attemptId = ++m_startAttemptId;
     
     // 鏋勫缓鍚姩鍛戒护
     QStringList args = buildServerArgs();
@@ -192,8 +207,11 @@ bool ServerManager::startServer()
     m_startTimer->start();
     
     // 绛夊緟涓€灏忔鏃堕棿璁╂湇鍔＄鍒濆鍖?
-    QTimer::singleShot(1000, this, [this]() {
-        if (m_state == ServerState::Starting) {
+    QTimer::singleShot(1000, this, [this, attemptId]() {
+        if (m_state == ServerState::Starting &&
+            attemptId == m_startAttemptId &&
+            m_serverProcess &&
+            m_serverProcess->state() != QProcess::NotRunning) {
             onServerStarted();
         }
     });
@@ -216,6 +234,11 @@ void ServerManager::onServerOutput()
     
     QString output = QString::fromUtf8(m_serverProcess->readAllStandardOutput());
     QString error = QString::fromUtf8(m_serverProcess->readAllStandardError());
+    const QString combined = output + "\n" + error;
+
+    if (m_state == ServerState::Starting && tryHandleVersionMismatch(combined)) {
+        return;
+    }
     
     if (!output.isEmpty()) {
         qDebug() << "Server output:" << output;
@@ -223,6 +246,55 @@ void ServerManager::onServerOutput()
     if (!error.isEmpty()) {
         qDebug() << "Server error:" << error;
     }
+}
+
+bool ServerManager::tryHandleVersionMismatch(const QString& text)
+{
+    static const QRegularExpression mismatchPattern(
+        "server version \\(([^)]+)\\) does not match the client \\(([^)]+)\\)",
+        QRegularExpression::CaseInsensitiveOption
+    );
+
+    const QRegularExpressionMatch match = mismatchPattern.match(text);
+    if (!match.hasMatch()) {
+        return false;
+    }
+
+    const QString serverVersion = match.captured(1).trimmed();
+    const QString clientVersion = match.captured(2).trimmed();
+    qWarning() << "Detected scrcpy version mismatch. server=" << serverVersion
+               << "client=" << clientVersion;
+
+    if (serverVersion.isEmpty()) {
+        return false;
+    }
+
+    if (m_versionRetryCount >= 1 || m_clientVersion == serverVersion) {
+        emit error(QString("scrcpy server/client version mismatch: server=%1 client=%2")
+                   .arg(serverVersion, clientVersion));
+        stop();
+        return true;
+    }
+
+    m_versionRetryCount++;
+    m_clientVersion = serverVersion;
+    qWarning() << "Retrying server startup with client version" << m_clientVersion;
+
+    if (m_serverProcess) {
+        m_serverProcess->blockSignals(true);
+        m_serverProcess->kill();
+        m_serverProcess->waitForFinished(2000);
+        delete m_serverProcess;
+        m_serverProcess = nullptr;
+    }
+
+    m_startTimer->stop();
+    QTimer::singleShot(100, this, [this]() {
+        if (m_state == ServerState::Starting) {
+            startServer();
+        }
+    });
+    return true;
 }
 
 void ServerManager::onServerError()
@@ -255,7 +327,7 @@ QStringList ServerManager::buildServerArgs() const
     QStringList args;
     
     // 鐗堟湰
-    args << QString("2.4");  // scrcpy-server鐗堟湰
+    args << m_clientVersion;  // scrcpy server client-version marker
     
     // 鏃ュ織绾у埆
     args << "log_level=info";
