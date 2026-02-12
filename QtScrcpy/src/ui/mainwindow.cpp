@@ -591,17 +591,28 @@ void MainWindow::onVideoDisconnected()
 
 void MainWindow::onFrameReady(const QImage& frame)
 {
+    if (frame.width() > 0 && frame.height() > 0 && m_resolutionLabel->text().isEmpty()) {
+        m_resolutionLabel->setText(QString("%1 x %2").arg(frame.width()).arg(frame.height()));
+        const QSize frameSize(frame.width(), frame.height());
+        m_inputHandler->setDeviceScreenSize(frameSize);
+        m_videoWidget->setDeviceScreenSize(frameSize);
+        m_videoWidget->resizeToFit();
+    }
     m_videoWidget->updateFrame(frame);
 }
 
 void MainWindow::onDeviceInfoReceived(const QString& deviceName, int width, int height)
 {
-    setWindowTitle(QString("QtScrcpy - %1").arg(deviceName));
-    m_resolutionLabel->setText(QString("%1 x %2").arg(width).arg(height));
+    const QString shownName = deviceName.isEmpty() ? m_currentSerial : deviceName;
+    setWindowTitle(QString("QtScrcpy - %1").arg(shownName));
 
-    m_inputHandler->setDeviceScreenSize(QSize(width, height));
-    m_videoWidget->setDeviceScreenSize(QSize(width, height));
-    m_videoWidget->resizeToFit();
+    if (width > 0 && height > 0) {
+        m_resolutionLabel->setText(QString("%1 x %2").arg(width).arg(height));
+        const QSize deviceSize(width, height);
+        m_inputHandler->setDeviceScreenSize(deviceSize);
+        m_videoWidget->setDeviceScreenSize(deviceSize);
+        m_videoWidget->resizeToFit();
+    }
 }
 
 void MainWindow::onFpsUpdated(double fps)

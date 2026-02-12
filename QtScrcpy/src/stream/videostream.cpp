@@ -12,7 +12,9 @@
 
 // scrcpy鍗忚甯搁噺
 constexpr int DEVICE_NAME_LENGTH = 64;
-constexpr int DEVICE_INFO_SIZE = DEVICE_NAME_LENGTH + 4; // name + resolution
+constexpr int DEVICE_NAME_META_SIZE = DEVICE_NAME_LENGTH;
+constexpr int LEGACY_DEVICE_INFO_SIZE = DEVICE_NAME_LENGTH + 4; // name + resolution
+constexpr uchar SCRCPY_DUMMY_BYTE = 0x00;
 
 VideoStream::VideoStream(QObject *parent)
     : QObject(parent)
@@ -37,6 +39,17 @@ VideoStream::VideoStream(QObject *parent)
     
     // 杩炴帴瑙ｇ爜鍣ㄤ俊鍙?
     connect(m_decoder, &Decoder::frameReady, this, &VideoStream::frameReady);
+    connect(m_decoder, &Decoder::initialized, this, [this](int width, int height) {
+        if (width <= 0 || height <= 0) {
+            return;
+        }
+        m_deviceWidth = width;
+        m_deviceHeight = height;
+        if (m_deviceName.isEmpty()) {
+            m_deviceName = QStringLiteral("Android Device");
+        }
+        emit deviceInfoReceived(m_deviceName, m_deviceWidth, m_deviceHeight);
+    });
     connect(m_decoder, &Decoder::decodeError, this, [this](const QString& message) {
         qWarning() << "Decoder error:" << message;
         emit error(QString("Decoder error: %1").arg(message));
@@ -126,31 +139,52 @@ void VideoStream::onReadyRead()
 
 bool VideoStream::parseDeviceInfo()
 {
-    if (m_buffer.size() < DEVICE_INFO_SIZE) {
+    int offset = 0;
+
+    if (!m_buffer.isEmpty() && static_cast<uchar>(m_buffer.at(0)) == SCRCPY_DUMMY_BYTE) {
+        if (m_buffer.size() < DEVICE_NAME_META_SIZE + 1) {
+            return false;
+        }
+        offset = 1;
+    }
+
+    if (m_buffer.size() < offset + DEVICE_NAME_META_SIZE) {
         return false;
     }
-    
-    // 璁惧鍚嶇О (64 bytes, null-terminated)
-    m_deviceName = QString::fromUtf8(m_buffer.left(DEVICE_NAME_LENGTH)).trimmed();
-    
-    // 鍒嗚鲸鐜?(4 bytes: 2 for width, 2 for height)
-    m_deviceWidth = qFromBigEndian<quint16>(
-        reinterpret_cast<const uchar*>(m_buffer.constData() + DEVICE_NAME_LENGTH));
-    m_deviceHeight = qFromBigEndian<quint16>(
-        reinterpret_cast<const uchar*>(m_buffer.constData() + DEVICE_NAME_LENGTH + 2));
-    
-    // 绉婚櫎宸插鐞嗙殑鏁版嵁
-    m_buffer.remove(0, DEVICE_INFO_SIZE);
+
+    m_deviceName = QString::fromUtf8(m_buffer.mid(offset, DEVICE_NAME_META_SIZE)).trimmed();
+    if (m_deviceName.isEmpty()) {
+        m_deviceName = QStringLiteral("Android Device");
+    }
+
+    m_deviceWidth = 0;
+    m_deviceHeight = 0;
+    int bytesToRemove = offset + DEVICE_NAME_META_SIZE;
+
+    if (m_buffer.size() >= offset + LEGACY_DEVICE_INFO_SIZE) {
+        const int w = qFromBigEndian<quint16>(
+            reinterpret_cast<const uchar*>(m_buffer.constData() + offset + DEVICE_NAME_LENGTH));
+        const int h = qFromBigEndian<quint16>(
+            reinterpret_cast<const uchar*>(m_buffer.constData() + offset + DEVICE_NAME_LENGTH + 2));
+
+        if (w > 0 && w <= 8192 && h > 0 && h <= 8192) {
+            m_deviceWidth = w;
+            m_deviceHeight = h;
+            bytesToRemove = offset + LEGACY_DEVICE_INFO_SIZE;
+        }
+    }
+
+    m_buffer.remove(0, bytesToRemove);
     m_deviceInfoReceived = true;
-    
-    qDebug() << "Device info received:" << m_deviceName 
-             << m_deviceWidth << "x" << m_deviceHeight;
-    
+
+    qDebug() << "Device info received:" << m_deviceName
+             << m_deviceWidth << "x" << m_deviceHeight
+             << "metaBytes=" << bytesToRemove;
+
     emit deviceInfoReceived(m_deviceName, m_deviceWidth, m_deviceHeight);
-    
+
     return true;
 }
-
 void VideoStream::processVideoData()
 {
     // scrcpy瑙嗛娴佹牸寮忥細

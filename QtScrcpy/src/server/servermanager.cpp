@@ -331,6 +331,13 @@ QStringList ServerManager::buildServerArgs() const
     
     // 鏃ュ織绾у埆
     args << "log_level=info";
+    args << "video=true";
+    args << "audio=false";
+    args << "control=true";
+    args << "send_device_meta=true";
+    args << "send_frame_meta=false";
+    args << "send_codec_meta=false";
+    args << "send_dummy_byte=false";
     
     // 鏈€澶у昂瀵?
     if (m_config.maxSize > 0) {
@@ -355,8 +362,6 @@ QStringList ServerManager::buildServerArgs() const
     args << "tunnel_forward=true";
     
     // 鎺у埗
-    args << "control=true";
-    
     // 鏄剧ず瑙︽懜
     if (m_config.showTouches) {
         args << "show_touches=true";
