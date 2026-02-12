@@ -173,7 +173,7 @@ void SettingsDialog::loadSettings()
     config.powerOffOnClose = settings.value("control/powerOffOnClose", false).toBool();
 
     setConfig(config);
-    m_muteOnConnectCheck->setChecked(settings.value("control/muteOnConnect", true).toBool());
+    m_muteOnConnectCheck->setChecked(settings.value("control/muteOnConnect", false).toBool());
 }
 
 void SettingsDialog::saveSettings()
@@ -203,6 +203,5 @@ void SettingsDialog::onRestoreDefaults()
 {
     ServerConfig defaults;
     setConfig(defaults);
-    m_muteOnConnectCheck->setChecked(true);
+    m_muteOnConnectCheck->setChecked(false);
 }
-

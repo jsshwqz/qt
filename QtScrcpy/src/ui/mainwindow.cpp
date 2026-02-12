@@ -28,6 +28,7 @@
 #include <QGroupBox>
 #include <QKeySequence>
 #include <QDebug>
+#include <QSettings>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -553,7 +554,11 @@ void MainWindow::onServerReady(int videoPort, int controlPort)
     m_clipboardManager->startSync();
 
     if (m_volumeController) {
-        m_volumeController->saveAndMute();
+        QSettings settings("QtScrcpy", "QtScrcpy");
+        const bool muteOnConnect = settings.value("control/muteOnConnect", false).toBool();
+        if (muteOnConnect) {
+            m_volumeController->saveAndMute();
+        }
     }
 
     m_isConnected = true;

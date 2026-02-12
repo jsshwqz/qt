@@ -37,6 +37,10 @@ VideoStream::VideoStream(QObject *parent)
     
     // 杩炴帴瑙ｇ爜鍣ㄤ俊鍙?
     connect(m_decoder, &Decoder::frameReady, this, &VideoStream::frameReady);
+    connect(m_decoder, &Decoder::decodeError, this, [this](const QString& message) {
+        qWarning() << "Decoder error:" << message;
+        emit error(QString("Decoder error: %1").arg(message));
+    });
 }
 
 VideoStream::~VideoStream()
@@ -84,7 +88,15 @@ void VideoStream::onConnected()
     qDebug() << "Video stream connected";
     
     // 鍒濆鍖栬В鐮佸櫒
-    QMetaObject::invokeMethod(m_decoder, "init", Qt::QueuedConnection);
+    const bool queued = QMetaObject::invokeMethod(m_decoder, [this]() {
+        if (!m_decoder->init()) {
+            emit error("Failed to initialize video decoder");
+        }
+    }, Qt::QueuedConnection);
+    if (!queued) {
+        qWarning() << "Failed to queue decoder initialization";
+        emit error("Failed to queue decoder initialization");
+    }
     
     emit connected();
 }
