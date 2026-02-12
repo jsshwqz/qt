@@ -23,6 +23,12 @@ QString adbExecutableName()
 #endif
 }
 
+bool isAdbDiagEnabled()
+{
+    static const bool enabled = (qEnvironmentVariableIntValue("QT_SCRCPY_ADB_DIAG") > 0);
+    return enabled;
+}
+
 bool isRunnableAdb(const QString& adbPath)
 {
     if (adbPath.trimmed().isEmpty()) {
@@ -193,6 +199,12 @@ QStringList AdbProcess::getDevices()
             devices.append(serial);
         }
     }
+
+    if (isAdbDiagEnabled()) {
+        qInfo().noquote() << QString("[ADB-DIAG] devices parsed_count=%1 serials=%2")
+                                 .arg(devices.size())
+                                 .arg(devices.join(", "));
+    }
     
     return devices;
 }
@@ -226,6 +238,24 @@ AdbProcess::AdbResult AdbProcess::execute(const QStringList& args, int timeoutMs
     result.output = m_stdOutput + remainingOutput;
     result.error = m_stdError + remainingError;
     result.success = (m_process->exitStatus() == QProcess::NormalExit && result.exitCode == 0);
+
+    if (isAdbDiagEnabled()) {
+        const QString cmd = args.join(' ');
+        if (cmd.startsWith("devices") || cmd.startsWith("version") || cmd.startsWith("start-server")) {
+            qInfo().noquote() << QString("[ADB-DIAG] cmd=\"%1\" path=\"%2\" exit=%3 success=%4")
+                                     .arg(cmd, m_adbPath)
+                                     .arg(result.exitCode)
+                                     .arg(result.success ? "1" : "0");
+            if (cmd.startsWith("devices")) {
+                if (!result.output.trimmed().isEmpty()) {
+                    qInfo().noquote() << QString("[ADB-DIAG] devices stdout:\n%1").arg(result.output);
+                }
+                if (!result.error.trimmed().isEmpty()) {
+                    qInfo().noquote() << QString("[ADB-DIAG] devices stderr:\n%1").arg(result.error);
+                }
+            }
+        }
+    }
     
     return result;
 }
