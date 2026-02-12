@@ -12,6 +12,7 @@
 #include "adb/shortcuts.h"
 #include "adb/volumecontroller.h"
 #include "stream/videostream.h"
+#include "stream/audiostream.h"
 #include "stream/controlstream.h"
 #include "input/inputhandler.h"
 #include "clipboard/clipboardmanager.h"
@@ -37,6 +38,7 @@ MainWindow::MainWindow(QWidget *parent)
     , m_deviceDiscovery(new DeviceDiscovery(this))
     , m_serverManager(new ServerManager(this))
     , m_videoStream(new VideoStream(this))
+    , m_audioStream(new AudioStream(this))
     , m_controlStream(new ControlStream(this))
     , m_inputHandler(new InputHandler(this))
     , m_clipboardManager(new ClipboardManager(this))
@@ -268,6 +270,22 @@ void MainWindow::setupConnections()
             this, &MainWindow::onFrameReady);
     connect(m_videoStream, &VideoStream::deviceInfoReceived,
             this, &MainWindow::onDeviceInfoReceived);
+    connect(m_audioStream, &AudioStream::connected, this, [this]() {
+        if (m_isConnected) {
+            m_statusLabel->setText("音频流已连接");
+        }
+    });
+    connect(m_audioStream, &AudioStream::disconnected, this, [this]() {
+        if (m_isConnected) {
+            m_statusLabel->setText("音频流已断开");
+        }
+    });
+    connect(m_audioStream, &AudioStream::error, this, [this](const QString& message) {
+        qWarning() << "Audio stream error:" << message;
+        if (m_isConnected) {
+            m_statusLabel->setText("音频异常: " + message);
+        }
+    });
 
     connect(m_videoWidget, &VideoWidget::filesDropped,
             this, &MainWindow::onFilesDropped);
@@ -441,6 +459,7 @@ void MainWindow::disconnectFromDevice()
     }
 
     m_videoStream->disconnect();
+    m_audioStream->disconnect();
     m_controlStream->disconnect();
     m_serverManager->stop();
 
@@ -531,14 +550,26 @@ void MainWindow::onServerStateChanged(ServerManager::ServerState state)
     }
 }
 
-void MainWindow::onServerReady(int videoPort, int controlPort)
+void MainWindow::onServerReady(int videoPort, int audioPort, int controlPort)
 {
-    qDebug() << "Server ready, connecting to ports:" << videoPort << controlPort;
+    qDebug() << "Server ready, connecting to ports:" << videoPort << audioPort << controlPort;
 
     if (!m_videoStream->connectToHost("127.0.0.1", videoPort)) {
         QMessageBox::critical(this, "连接失败", "无法连接视频流。");
         disconnectFromDevice();
         return;
+    }
+
+    // Socket open order must be video -> audio -> control for scrcpy server.
+    if (audioPort > 0 && !m_audioStream->connectToHost("127.0.0.1", audioPort)) {
+        QMessageBox::critical(this, "连接失败", "无法连接音频通道。");
+        disconnectFromDevice();
+        return;
+    }
+
+    if (audioPort <= 0) {
+        qDebug() << "Audio forwarding disabled for this device.";
+        m_statusLabel->setText("当前设备不支持系统音频转发（需 Android 11+）");
     }
 
     if (!m_controlStream->connectToHost("127.0.0.1", controlPort)) {

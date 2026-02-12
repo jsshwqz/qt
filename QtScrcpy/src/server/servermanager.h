@@ -102,6 +102,7 @@ public:
      * @brief 获取控制端口
      */
     int controlPort() const { return m_controlPort; }
+    int audioPort() const { return m_audioPort; }
 
     /**
      * @brief 服务端JAR路径
@@ -117,7 +118,7 @@ signals:
     /**
      * @brief 服务端就绪信号
      */
-    void serverReady(int videoPort, int controlPort);
+    void serverReady(int videoPort, int audioPort, int controlPort);
 
     /**
      * @brief 服务端停止信号
@@ -155,10 +156,13 @@ private:
     QTimer* m_startTimer;
     
     int m_videoPort;
+    int m_audioPort;
     int m_controlPort;
     QString m_clientVersion;
     int m_startAttemptId;
     int m_versionRetryCount;
+    bool m_audioEnabled;
+    int m_deviceSdk;
     
     static const QString SERVER_FILE_NAME;
     static const QString SERVER_PATH_ON_DEVICE;

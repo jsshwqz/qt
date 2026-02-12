@@ -13,6 +13,7 @@ find_package(Qt6 REQUIRED COMPONENTS
     Gui 
     Widgets 
     Network
+    Multimedia
 )
 
 # FFmpeg 配置
@@ -47,6 +48,7 @@ set(SOURCES
     src/adb/volumecontroller.cpp
     src/decoder/decoder.cpp
     src/stream/videostream.cpp
+    src/stream/audiostream.cpp
     src/stream/controlstream.cpp
     src/input/inputhandler.cpp
     src/input/controlmessage.cpp
@@ -69,6 +71,7 @@ set(HEADERS
     src/adb/volumecontroller.h
     src/decoder/decoder.h
     src/stream/videostream.h
+    src/stream/audiostream.h
     src/stream/controlstream.h
     src/input/inputhandler.h
     src/input/controlmessage.h
@@ -95,6 +98,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     Qt6::Gui
     Qt6::Widgets
     Qt6::Network
+    Qt6::Multimedia
     avcodec
     avformat
     avutil

@@ -511,7 +511,9 @@ void InputHandler::handleKeyPress(QKeyEvent* event)
     }
     
     // 处理文本输入
-    if (!event->text().isEmpty() && event->key() < Qt::Key_Escape) {
+    if (event->key() == Qt::Key_unknown &&
+        !event->text().isEmpty() &&
+        !(event->modifiers() & (Qt::ControlModifier | Qt::AltModifier | Qt::MetaModifier))) {
         handleTextInput(event->text());
         return;
     }

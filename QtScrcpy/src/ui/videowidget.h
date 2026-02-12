@@ -144,6 +144,7 @@ private:
     
     // 渲染优化
     bool m_needsUpdate;
+    bool m_imeComposing;
 };
 
 #endif // VIDEOWIDGET_H

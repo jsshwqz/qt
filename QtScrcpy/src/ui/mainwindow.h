@@ -22,6 +22,7 @@
 class VideoWidget;
 class ToolbarWidget;
 class VideoStream;
+class AudioStream;
 class ControlStream;
 class InputHandler;
 class ClipboardManager;
@@ -57,7 +58,7 @@ private slots:
     
     // 服务端管理
     void onServerStateChanged(ServerManager::ServerState state);
-    void onServerReady(int videoPort, int controlPort);
+    void onServerReady(int videoPort, int audioPort, int controlPort);
     void onServerError(const QString& message);
     
     // 视频流
@@ -130,6 +131,7 @@ private:
     DeviceDiscovery* m_deviceDiscovery;
     ServerManager* m_serverManager;
     VideoStream* m_videoStream;
+    AudioStream* m_audioStream;
     ControlStream* m_controlStream;
     InputHandler* m_inputHandler;
     ClipboardManager* m_clipboardManager;

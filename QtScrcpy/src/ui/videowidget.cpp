@@ -17,6 +17,9 @@
 #include <QDropEvent>
 #include <QMimeData>
 #include <QUrl>
+#include <QScreen>
+#include <QGuiApplication>
+#include <QInputMethod>
 #include <QDebug>
 
 VideoWidget::VideoWidget(QWidget *parent)
@@ -29,6 +32,7 @@ VideoWidget::VideoWidget(QWidget *parent)
     , m_frameCount(0)
     , m_fps(0.0)
     , m_needsUpdate(false)
+    , m_imeComposing(false)
 {
     // 设置焦点策略
     setFocusPolicy(Qt::StrongFocus);
@@ -96,6 +100,10 @@ void VideoWidget::setFullScreen(bool fullscreen)
         }
         setCursor(Qt::ArrowCursor);
     }
+
+    updateRenderRect();
+    update();
+    setFocus(Qt::OtherFocusReason);
 }
 
 void VideoWidget::setInputHandler(InputHandler* handler)
@@ -139,7 +147,9 @@ void VideoWidget::resizeToFit()
     // 调整窗口大小
     QWidget* parentWindow = window();
     if (parentWindow) {
-        parentWindow->resize(targetSize);
+        const int extraWidth = parentWindow->width() - width();
+        const int extraHeight = parentWindow->height() - height();
+        parentWindow->resize(targetSize.width() + extraWidth, targetSize.height() + extraHeight);
     }
 }
 
@@ -151,7 +161,9 @@ void VideoWidget::resizeToOriginal()
     
     QWidget* parentWindow = window();
     if (parentWindow) {
-        parentWindow->resize(m_videoSize);
+        const int extraWidth = parentWindow->width() - width();
+        const int extraHeight = parentWindow->height() - height();
+        parentWindow->resize(m_videoSize.width() + extraWidth, m_videoSize.height() + extraHeight);
     }
 }
 
@@ -160,7 +172,7 @@ void VideoWidget::paintEvent(QPaintEvent* event)
     Q_UNUSED(event)
     
     QPainter painter(this);
-    painter.setRenderHint(QPainter::SmoothPixmapTransform);
+    painter.setRenderHint(QPainter::SmoothPixmapTransform, !m_isFullScreen);
     
     QMutexLocker locker(&m_frameMutex);
     
@@ -238,6 +250,8 @@ void VideoWidget::calculateFps()
 // 输入事件处理
 void VideoWidget::mousePressEvent(QMouseEvent* event)
 {
+    setFocus(Qt::MouseFocusReason);
+
     if (m_inputHandler && m_renderRect.contains(event->pos())) {
         const QPoint mappedPos = mapToVideo(event->pos());
         QMouseEvent mappedEvent(
@@ -330,6 +344,13 @@ void VideoWidget::keyPressEvent(QKeyEvent* event)
         setFullScreen(false);
         return;
     }
+
+    const bool imeVisible = QGuiApplication::inputMethod() && QGuiApplication::inputMethod()->isVisible();
+    if ((m_imeComposing || imeVisible) &&
+        !(event->modifiers() & (Qt::ControlModifier | Qt::AltModifier | Qt::MetaModifier))) {
+        event->accept();
+        return;
+    }
     
     if (m_inputHandler) {
         m_inputHandler->handleKeyPress(event);
@@ -338,6 +359,13 @@ void VideoWidget::keyPressEvent(QKeyEvent* event)
 
 void VideoWidget::keyReleaseEvent(QKeyEvent* event)
 {
+    const bool imeVisible = QGuiApplication::inputMethod() && QGuiApplication::inputMethod()->isVisible();
+    if ((m_imeComposing || imeVisible) &&
+        !(event->modifiers() & (Qt::ControlModifier | Qt::AltModifier | Qt::MetaModifier))) {
+        event->accept();
+        return;
+    }
+
     if (m_inputHandler) {
         m_inputHandler->handleKeyRelease(event);
     }
@@ -345,10 +373,15 @@ void VideoWidget::keyReleaseEvent(QKeyEvent* event)
 
 void VideoWidget::inputMethodEvent(QInputMethodEvent* event)
 {
+    if (event) {
+        m_imeComposing = !event->preeditString().isEmpty();
+    }
+
     if (m_inputHandler && event) {
         const QString committedText = event->commitString();
         if (!committedText.isEmpty()) {
             m_inputHandler->handleTextInput(committedText);
+            m_imeComposing = false;
         }
     }
     if (event) {
@@ -425,11 +458,15 @@ void VideoWidget::dropEvent(QDropEvent* event)
 void VideoWidget::focusInEvent(QFocusEvent* event)
 {
     QWidget::focusInEvent(event);
+    if (QGuiApplication::inputMethod()) {
+        QGuiApplication::inputMethod()->update(Qt::ImEnabled | Qt::ImCursorRectangle);
+    }
     // 可以在这里处理获得焦点时的逻辑
 }
 
 void VideoWidget::focusOutEvent(QFocusEvent* event)
 {
     QWidget::focusOutEvent(event);
+    m_imeComposing = false;
     // 可以在这里处理失去焦点时的逻辑
 }

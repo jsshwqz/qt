@@ -23,10 +23,13 @@ ServerManager::ServerManager(QObject *parent)
     , m_serverProcess(nullptr)
     , m_startTimer(new QTimer(this))
     , m_videoPort(0)
+    , m_audioPort(0)
     , m_controlPort(0)
     , m_clientVersion("2.4")
     , m_startAttemptId(0)
     , m_versionRetryCount(0)
+    , m_audioEnabled(false)
+    , m_deviceSdk(0)
 {
     m_startTimer->setSingleShot(true);
     m_startTimer->setInterval(10000); // 10绉掕秴鏃?
@@ -78,6 +81,21 @@ bool ServerManager::start()
     m_clientVersion = "2.4";
     m_startAttemptId = 0;
     m_versionRetryCount = 0;
+    m_deviceSdk = 0;
+    m_audioEnabled = false;
+
+    const QString sdkValue = m_adb->getDeviceProperty(m_serial, "ro.build.version.sdk");
+    bool sdkOk = false;
+    const int sdkInt = sdkValue.trimmed().toInt(&sdkOk);
+    if (sdkOk) {
+        m_deviceSdk = sdkInt;
+        m_audioEnabled = (sdkInt >= 30); // Android 11+
+    } else {
+        // Keep audio disabled if SDK cannot be detected to avoid protocol mismatch.
+        qWarning() << "Failed to parse device SDK from:" << sdkValue;
+    }
+
+    qDebug() << "Device SDK:" << m_deviceSdk << "audioEnabled:" << m_audioEnabled;
     
     // 寮€濮嬫帹閫佹湇鍔＄
     return pushServer();
@@ -105,11 +123,15 @@ void ServerManager::stop()
     if (m_videoPort > 0) {
         m_adb->removeForward(m_serial, m_videoPort);
     }
+    if (m_audioPort > 0) {
+        m_adb->removeForward(m_serial, m_audioPort);
+    }
     if (m_controlPort > 0) {
         m_adb->removeForward(m_serial, m_controlPort);
     }
     
     m_videoPort = 0;
+    m_audioPort = 0;
     m_controlPort = 0;
     
     setState(ServerState::Idle);
@@ -139,31 +161,44 @@ bool ServerManager::pushServer()
 
 bool ServerManager::setupPortForward()
 {
-    // 鏌ユ壘鍙敤绔彛
     m_videoPort = findFreePort(27183);
-    m_controlPort = findFreePort(m_videoPort + 1);
-    
-    qDebug() << "Setting up port forward:" << m_videoPort << m_controlPort;
-    
-    // 璁剧疆瑙嗛绔彛杞彂
+    if (m_audioEnabled) {
+        m_audioPort = findFreePort(m_videoPort + 1);
+        m_controlPort = findFreePort(m_audioPort + 1);
+    } else {
+        m_audioPort = 0;
+        m_controlPort = findFreePort(m_videoPort + 1);
+    }
+
+    qDebug() << "Setting up port forward:" << m_videoPort << m_audioPort << m_controlPort;
+
     if (!m_adb->forwardToLocalAbstract(m_serial, m_videoPort, "scrcpy")) {
-        emit error("璁剧疆瑙嗛绔彛杞彂澶辫触");
+        emit error("Failed to setup video port forwarding");
         setState(ServerState::Error);
         return false;
     }
-    
-    // 璁剧疆鎺у埗绔彛杞彂
+
+    if (m_audioEnabled) {
+        if (!m_adb->forwardToLocalAbstract(m_serial, m_audioPort, "scrcpy")) {
+            emit error("Failed to setup audio port forwarding");
+            m_adb->removeForward(m_serial, m_videoPort);
+            setState(ServerState::Error);
+            return false;
+        }
+    }
+
     if (!m_adb->forwardToLocalAbstract(m_serial, m_controlPort, "scrcpy")) {
-        emit error("璁剧疆鎺у埗绔彛杞彂澶辫触");
+        emit error("Failed to setup control port forwarding");
         m_adb->removeForward(m_serial, m_videoPort);
+        if (m_audioEnabled && m_audioPort > 0) {
+            m_adb->removeForward(m_serial, m_audioPort);
+        }
         setState(ServerState::Error);
         return false;
     }
-    
-    // 鍚姩鏈嶅姟绔?
+
     return startServer();
 }
-
 bool ServerManager::startServer()
 {
     if (m_serverProcess) {
@@ -231,8 +266,8 @@ void ServerManager::onServerStarted()
     m_startTimer->stop();
     setState(ServerState::Running);
     
-    qDebug() << "Server is ready on ports:" << m_videoPort << m_controlPort;
-    emit serverReady(m_videoPort, m_controlPort);
+    qDebug() << "Server is ready on ports:" << m_videoPort << m_audioPort << m_controlPort;
+    emit serverReady(m_videoPort, m_audioPort, m_controlPort);
 }
 
 void ServerManager::onServerOutput()
@@ -342,7 +377,10 @@ QStringList ServerManager::buildServerArgs() const
     // 鏃ュ織绾у埆
     args << "log_level=info";
     args << "video=true";
-    args << "audio=false";
+    args << QString("audio=%1").arg(m_audioEnabled ? "true" : "false");
+    if (m_audioEnabled) {
+        args << "audio_codec=raw";
+    }
     args << "control=true";
     args << "send_device_meta=true";
     args << "send_frame_meta=false";
