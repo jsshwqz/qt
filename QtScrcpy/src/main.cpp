@@ -212,18 +212,18 @@ int main(int argc, char *argv[])
     QString detectedAdbPath;
     if (!checkAdbExists(&detectedAdbPath)) {
         const QString warningText = QString(
-            "ADB was not detected.\n\n"
-            "Please ensure one of the following:\n"
-            "1. adb/adb.exe exists next to the application.\n"
-            "2. adb.exe exists next to the application.\n"
-            "3. ADB is available in system PATH.\n\n"
-            "Resolved ADB path: %1\n\n"
-            "Some features may not be available until ADB is configured.")
+            "未检测到 ADB。\n\n"
+            "请确认以下任一条件成立：\n"
+            "1. 程序同级目录存在 adb/adb.exe；\n"
+            "2. 程序同级目录存在 adb.exe；\n"
+            "3. 系统 PATH 中可找到 ADB。\n\n"
+            "当前解析到的 ADB 路径：%1\n\n"
+            "在 ADB 可用前，部分功能可能无法使用。")
             .arg(detectedAdbPath);
 
         QMessageBox::warning(
             nullptr,
-            "Warning",
+            "警告",
             warningText);
     }
     
