@@ -18,6 +18,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
 
       - name: Install Qt 6 (cloud)
         uses: jurplel/install-qt-action@v4
@@ -39,6 +41,46 @@ jobs:
         run: |
           git checkout --force $env:GITHUB_SHA
           git rev-parse HEAD
+
+      - name: Change note gate (source changes require evidence)
+        if: github.event_name == 'push'
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Stop"
+          $changed = @()
+          try {
+            $changed = @(git diff --name-only HEAD~1 HEAD)
+          } catch {
+            Write-Host "No previous commit available for diff, skipping gate."
+            exit 0
+          }
+
+          if ($changed.Count -eq 0) {
+            Write-Host "No file changes detected."
+            exit 0
+          }
+
+          $srcChanged = $changed | Where-Object {
+            $_ -like "QtScrcpy/src/*" -or
+            $_ -eq "QtScrcpy/CMakeLists.txt" -or
+            $_ -eq "QtScrcpy/src/main.cpp"
+          }
+
+          if (!$srcChanged -or $srcChanged.Count -eq 0) {
+            Write-Host "No core source changes. Gate passed."
+            exit 0
+          }
+
+          $noteChanged = $changed | Where-Object { $_ -like "docs/change-notes/*.md" }
+          if (!$noteChanged -or $noteChanged.Count -eq 0) {
+            Write-Host "Changed source files:"
+            $srcChanged | ForEach-Object { Write-Host " - $_" }
+            throw "Source code changed but no docs/change-notes/*.md update found. Add a change note with root cause and validation evidence."
+          }
+
+          Write-Host "Source change evidence files:"
+          $noteChanged | ForEach-Object { Write-Host " - $_" }
+          Write-Host "Change note gate passed."
 
       - name: Configure CMake
         run: cmake -S QtScrcpy -B build -G "Ninja" -DCMAKE_BUILD_TYPE=Release
@@ -259,6 +301,25 @@ jobs:
             Remove-Item $zipPath -Force
           }
           Compress-Archive -Path "$pkgDir/*" -DestinationPath $zipPath
+
+      - name: Preflight package gate
+        shell: powershell
+        run: |
+          .\scripts\preflight_windows.ps1 `
+            -PackageDir "release/QtScrcpy-win-x64" `
+            -ZipPath "release/QtScrcpy-win-x64.zip" `
+            -MinZipSizeMB 50
+
+      - name: Print package runtime summary
+        shell: powershell
+        run: |
+          $pkgDir = "release/QtScrcpy-win-x64"
+          Write-Host "== Runtime summary =="
+          Get-ChildItem $pkgDir -File |
+            Where-Object { $_.Name -match '^(QtScrcpy\.exe|adb\.exe|AdbWinApi\.dll|AdbWinUsbApi\.dll|avcodec-|avformat-|avutil-|swscale-|swresample-)' } |
+            Sort-Object Name |
+            Select-Object Name,Length |
+            Format-Table -AutoSize
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
