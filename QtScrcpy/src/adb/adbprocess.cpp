@@ -170,7 +170,8 @@ QStringList AdbProcess::getDevices()
     }
     
     // 解析输出
-    const QStringList lines = result.output.split('\n', Qt::SkipEmptyParts);
+    const QString combinedOutput = result.output + "\n" + result.error;
+    const QStringList lines = combinedOutput.split('\n', Qt::SkipEmptyParts);
     const QRegularExpression linePattern(
         "^\\s*(\\S+)\\s+(device|unauthorized|offline)\\b",
         QRegularExpression::CaseInsensitiveOption
@@ -219,9 +220,12 @@ AdbProcess::AdbResult AdbProcess::execute(const QStringList& args, int timeoutMs
     }
     
     result.exitCode = m_process->exitCode();
-    result.output = QString::fromUtf8(m_process->readAllStandardOutput());
-    result.error = QString::fromUtf8(m_process->readAllStandardError());
-    result.success = (result.exitCode == 0);
+
+    const QString remainingOutput = QString::fromUtf8(m_process->readAllStandardOutput());
+    const QString remainingError = QString::fromUtf8(m_process->readAllStandardError());
+    result.output = m_stdOutput + remainingOutput;
+    result.error = m_stdError + remainingError;
+    result.success = (m_process->exitStatus() == QProcess::NormalExit && result.exitCode == 0);
     
     return result;
 }
