@@ -335,12 +335,42 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          $tag = "v3.0.0-delivery-20260210"
+          $dateTag = (Get-Date).ToUniversalTime().ToString("yyyyMMdd")
+          $dateText = (Get-Date).ToUniversalTime().ToString("yyyy-MM-dd")
+          $tag = "v3.0.0-delivery-$dateTag"
+          $title = "QtScrcpy Delivery v3 ($dateText UTC)"
           $asset = "release/QtScrcpy-win-x64.zip"
           $max = 5
+          $notes = @"
+Automated Windows package build.
+
+- Commit: $env:GITHUB_SHA
+- Run ID: $env:GITHUB_RUN_ID
+- Run Number: $env:GITHUB_RUN_NUMBER
+"@
+
+          gh release view $tag *> $null
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "Release tag does not exist, creating: $tag"
+            for ($i = 1; $i -le $max; $i++) {
+              gh release create $tag --title $title --notes $notes --target $env:GITHUB_SHA
+              if ($LASTEXITCODE -eq 0) {
+                Write-Host "Release created: $tag"
+                break
+              }
+
+              if ($i -eq $max) {
+                throw "gh release create failed after $max attempts (exit code: $LASTEXITCODE)"
+              }
+
+              Start-Sleep -Seconds (5 * $i)
+            }
+          } else {
+            Write-Host "Release already exists: $tag"
+          }
 
           for ($i = 1; $i -le $max; $i++) {
-            Write-Host "Uploading release asset (attempt $i/$max): $asset"
+            Write-Host "Uploading release asset to $tag (attempt $i/$max): $asset"
             gh release upload $tag $asset --clobber
             if ($LASTEXITCODE -eq 0) {
               Write-Host "Upload succeeded."
