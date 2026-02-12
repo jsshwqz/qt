@@ -568,6 +568,11 @@ void MainWindow::onServerReady(int videoPort, int controlPort)
 
 void MainWindow::onServerError(const QString& message)
 {
+    if (!m_isConnected && m_currentSerial.isEmpty()) {
+        qDebug() << "Ignoring stale server error after disconnect:" << message;
+        return;
+    }
+
     QMessageBox::critical(this, "服务端错误", message);
     disconnectFromDevice();
     showDeviceList();

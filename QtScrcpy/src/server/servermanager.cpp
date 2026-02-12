@@ -86,10 +86,17 @@ bool ServerManager::start()
 void ServerManager::stop()
 {
     m_startTimer->stop();
+    setState(ServerState::Stopping);
     
     if (m_serverProcess) {
-        m_serverProcess->kill();
-        m_serverProcess->waitForFinished(3000);
+        m_serverProcess->blockSignals(true);
+        if (m_serverProcess->state() != QProcess::NotRunning) {
+            m_serverProcess->terminate();
+            if (!m_serverProcess->waitForFinished(1500)) {
+                m_serverProcess->kill();
+                m_serverProcess->waitForFinished(3000);
+            }
+        }
         delete m_serverProcess;
         m_serverProcess = nullptr;
     }
@@ -299,10 +306,13 @@ bool ServerManager::tryHandleVersionMismatch(const QString& text)
 
 void ServerManager::onServerError()
 {
+    if (m_state == ServerState::Stopping || m_state == ServerState::Idle) {
+        return;
+    }
+
     QString errorMsg = m_serverProcess ? m_serverProcess->errorString() : "Unknown error";
     qDebug() << "Server process error:" << errorMsg;
-    
-    emit error("鏈嶅姟绔繘绋嬮敊璇? " + errorMsg);
+    emit error(QString("Server process error: %1").arg(errorMsg));
     stop();
 }
 
