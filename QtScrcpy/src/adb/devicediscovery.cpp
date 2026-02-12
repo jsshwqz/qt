@@ -7,6 +7,8 @@
 
 #include "devicediscovery.h"
 #include "adbprocess.h"
+#include <QSettings>
+#include <QRegularExpression>
 
 // PortScanWorker
 PortScanWorker::PortScanWorker(QObject *parent)
@@ -54,6 +56,65 @@ DeviceDiscovery::~DeviceDiscovery()
     stopScan();
 }
 
+bool DeviceDiscovery::isValidSegment(const QString& segment)
+{
+    static const QRegularExpression re(
+        "^((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)\\.){2}(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)$");
+    return re.match(segment).hasMatch();
+}
+
+QStringList DeviceDiscovery::loadSavedSegments() const
+{
+    QSettings settings("QtScrcpy", "QtScrcpy");
+    QStringList segments = settings.value("network/lastScanSegments").toStringList();
+    if (segments.isEmpty()) {
+        const QString legacy = settings.value("network/lastScanSegment").toString().trimmed();
+        if (!legacy.isEmpty()) {
+            segments.append(legacy);
+        }
+    }
+
+    QStringList filtered;
+    for (const QString& segment : segments) {
+        const QString trimmed = segment.trimmed();
+        if (!isValidSegment(trimmed)) {
+            continue;
+        }
+        if (!filtered.contains(trimmed)) {
+            filtered.append(trimmed);
+        }
+        if (filtered.size() >= 2) {
+            break;
+        }
+    }
+    return filtered;
+}
+
+void DeviceDiscovery::saveSegments(const QStringList& segments) const
+{
+    QStringList filtered;
+    for (const QString& segment : segments) {
+        const QString trimmed = segment.trimmed();
+        if (!isValidSegment(trimmed)) {
+            continue;
+        }
+        if (!filtered.contains(trimmed)) {
+            filtered.append(trimmed);
+        }
+        if (filtered.size() >= 2) {
+            break;
+        }
+    }
+
+    if (filtered.isEmpty()) {
+        return;
+    }
+
+    QSettings settings("QtScrcpy", "QtScrcpy");
+    settings.setValue("network/lastScanSegments", filtered);
+    settings.setValue("network/lastScanSegment", filtered.first());
+}
+
 bool DeviceDiscovery::isPreferredWirelessInterface(const QNetworkInterface& iface) const
 {
     if (iface.type() == QNetworkInterface::Wifi) {
@@ -96,7 +157,7 @@ bool DeviceDiscovery::isIgnoredInterface(const QNetworkInterface& iface) const
 
 QStringList DeviceDiscovery::getLocalNetworkSegments() const
 {
-    auto collectSegments = [this](bool wifiOnly) {
+    auto collectSegments = [this](bool wifiOnly, bool requireRunning, bool preferFirst) {
         QStringList segments;
         const QList<QNetworkInterface> interfaces = QNetworkInterface::allInterfaces();
 
@@ -107,11 +168,13 @@ QStringList DeviceDiscovery::getLocalNetworkSegments() const
             if (iface.flags() & QNetworkInterface::IsLoopBack) {
                 continue;
             }
-            if (!(iface.flags() & QNetworkInterface::IsUp)) {
-                continue;
-            }
-            if (!(iface.flags() & QNetworkInterface::IsRunning)) {
-                continue;
+            if (requireRunning) {
+                if (!(iface.flags() & QNetworkInterface::IsUp)) {
+                    continue;
+                }
+                if (!(iface.flags() & QNetworkInterface::IsRunning)) {
+                    continue;
+                }
             }
             if (wifiOnly && !isPreferredWirelessInterface(iface)) {
                 continue;
@@ -138,26 +201,47 @@ QStringList DeviceDiscovery::getLocalNetworkSegments() const
 
                 const QString segment = QString("%1.%2.%3")
                     .arg(parts[0]).arg(parts[1]).arg(parts[2]);
-                if (!segments.contains(segment)) {
+                if (isValidSegment(segment) && !segments.contains(segment)) {
                     segments.append(segment);
                     addedFromCurrentInterface = true;
                 }
             }
 
-            // Prefer scanning the first active eligible interface to avoid
-            // expensive scans across unrelated adapters.
-            if (addedFromCurrentInterface && !segments.isEmpty()) {
+            // Prefer the first eligible interface to avoid large scans across
+            // unrelated virtual or disconnected adapters.
+            if (preferFirst && addedFromCurrentInterface && !segments.isEmpty()) {
                 return QStringList{segments.first()};
             }
         }
         return segments;
     };
 
-    const QStringList wifiSegments = collectSegments(true);
-    if (!wifiSegments.isEmpty()) {
-        return wifiSegments;
+    // 1) Current connected Wi-Fi subnet (fast path).
+    const QStringList activeWifiSegments = collectSegments(true, true, true);
+    if (!activeWifiSegments.isEmpty()) {
+        return activeWifiSegments;
     }
-    return collectSegments(false);
+
+    // 2) Last successful scan subnet from local settings.
+    const QStringList savedSegments = loadSavedSegments();
+    if (!savedSegments.isEmpty()) {
+        return savedSegments;
+    }
+
+    // 3) Wireless adapter configured subnet fallback.
+    const QStringList configuredWifiSegments = collectSegments(true, false, true);
+    if (!configuredWifiSegments.isEmpty()) {
+        return configuredWifiSegments;
+    }
+
+    // 4) Any active subnet fallback.
+    const QStringList activeAnySegments = collectSegments(false, true, true);
+    if (!activeAnySegments.isEmpty()) {
+        return activeAnySegments;
+    }
+
+    // 5) Last-resort configured subnet.
+    return collectSegments(false, false, true);
 }
 
 void DeviceDiscovery::startScan(int portToScan, int timeout)
@@ -170,10 +254,12 @@ void DeviceDiscovery::startScan(int portToScan, int timeout)
     m_timeout = timeout;
     m_foundDevices.clear();
     m_ipsToScan.clear();
+    m_scanSegments.clear();
     m_currentIndex = 0;
     m_activeScans = 0;
 
     for (QTcpSocket* socket : m_sockets) {
+        socket->disconnect(this);
         socket->abort();
         socket->deleteLater();
     }
@@ -184,8 +270,10 @@ void DeviceDiscovery::startScan(int portToScan, int timeout)
         emit scanFinished(m_foundDevices);
         return;
     }
+    m_scanSegments = segments;
+    saveSegments(m_scanSegments);
 
-    for (const QString& segment : segments) {
+    for (const QString& segment : m_scanSegments) {
         for (int i = 1; i <= 254; ++i) {
             m_ipsToScan.append(QString("%1.%2").arg(segment).arg(i));
         }
@@ -205,6 +293,7 @@ void DeviceDiscovery::stopScan()
     m_progressTimer->stop();
 
     for (QTcpSocket* socket : m_sockets) {
+        socket->disconnect(this);
         socket->abort();
         socket->deleteLater();
     }
@@ -226,7 +315,7 @@ void DeviceDiscovery::processNextBatch()
 
     emit scanProgress(m_currentIndex, m_totalIps);
 
-    if (m_currentIndex >= m_ipsToScan.size() && m_activeScans == 0) {
+    if (m_currentIndex >= m_ipsToScan.size() && m_activeScans <= 0) {
         m_isScanning = false;
         m_progressTimer->stop();
         emit scanFinished(m_foundDevices);
@@ -253,9 +342,13 @@ void DeviceDiscovery::scanIp(const QString& ip, int port)
     QTimer* timeoutTimer = new QTimer(socket);
     timeoutTimer->setSingleShot(true);
     connect(timeoutTimer, &QTimer::timeout, this, [this, socket]() {
+        if (!m_sockets.contains(socket)) {
+            return;
+        }
+        socket->disconnect(this);
         socket->abort();
         m_sockets.removeOne(socket);
-        --m_activeScans;
+        m_activeScans = qMax(0, m_activeScans - 1);
         socket->deleteLater();
     });
     timeoutTimer->start(m_timeout);
@@ -281,8 +374,10 @@ void DeviceDiscovery::onSocketConnected()
     emit deviceFound(device.ip, device.port);
 
     socket->disconnectFromHost();
-    m_sockets.removeOne(socket);
-    --m_activeScans;
+    if (!m_sockets.removeOne(socket)) {
+        return;
+    }
+    m_activeScans = qMax(0, m_activeScans - 1);
     socket->deleteLater();
 }
 
@@ -294,8 +389,10 @@ void DeviceDiscovery::onSocketError(QAbstractSocket::SocketError error)
         return;
     }
 
-    m_sockets.removeOne(socket);
-    --m_activeScans;
+    if (!m_sockets.removeOne(socket)) {
+        return;
+    }
+    m_activeScans = qMax(0, m_activeScans - 1);
     socket->deleteLater();
 }
 

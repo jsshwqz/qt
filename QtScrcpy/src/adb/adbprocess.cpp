@@ -81,7 +81,8 @@ void AdbProcess::setAdbPath(const QString& path)
 bool AdbProcess::checkAdbVersion()
 {
     AdbResult result = execute({"version"}, 5000);
-    return result.success && result.output.contains("Android Debug Bridge");
+    const QString combinedOutput = result.output + "\n" + result.error;
+    return result.success && combinedOutput.contains("Android Debug Bridge", Qt::CaseInsensitive);
 }
 
 QStringList AdbProcess::getDevices()

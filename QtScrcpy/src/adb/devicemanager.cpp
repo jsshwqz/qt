@@ -36,6 +36,8 @@ DeviceManager::~DeviceManager()
 
 void DeviceManager::startMonitoring()
 {
+    // Ensure daemon is running before polling, so USB devices can appear quickly.
+    m_adb->execute({"start-server"}, 5000);
     refreshDevices();
     m_refreshTimer->start(m_refreshInterval);
 }

@@ -69,6 +69,7 @@ public:
      * @return 网络段列表（如 "192.168.1"）
      */
     QStringList getLocalNetworkSegments() const;
+    QStringList activeScanSegments() const { return m_scanSegments; }
 
     /**
      * @brief 开始扫描
@@ -125,6 +126,9 @@ private slots:
     void processNextBatch();
 
 private:
+    static bool isValidSegment(const QString& segment);
+    QStringList loadSavedSegments() const;
+    void saveSegments(const QStringList& segments) const;
     bool isPreferredWirelessInterface(const QNetworkInterface& iface) const;
     bool isIgnoredInterface(const QNetworkInterface& iface) const;
     void scanIp(const QString& ip, int port);
@@ -135,6 +139,7 @@ private:
     int m_concurrency;
     
     QStringList m_ipsToScan;
+    QStringList m_scanSegments;
     int m_currentIndex;
     int m_totalIps;
     int m_activeScans;
