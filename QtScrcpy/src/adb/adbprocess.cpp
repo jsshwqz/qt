@@ -22,6 +22,33 @@ QString adbExecutableName()
     return "adb";
 #endif
 }
+
+bool isRunnableAdb(const QString& adbPath)
+{
+    if (adbPath.trimmed().isEmpty()) {
+        return false;
+    }
+
+    const QFileInfo info(adbPath);
+    if (!info.exists() || !info.isFile()) {
+        return false;
+    }
+
+    QProcess probe;
+    probe.start(info.absoluteFilePath(), {"version"});
+
+    if (!probe.waitForStarted(3000)) {
+        return false;
+    }
+
+    if (!probe.waitForFinished(5000)) {
+        probe.kill();
+        probe.waitForFinished(1000);
+        return false;
+    }
+
+    return probe.exitStatus() == QProcess::NormalExit && probe.exitCode() == 0;
+}
 }
 
 QString AdbProcess::resolveAdbPath()
@@ -34,19 +61,47 @@ QString AdbProcess::resolveAdbPath()
         appDir.filePath("platform-tools/" + adbName)
     };
 
-    for (const QString& path : candidatePaths) {
-        const QFileInfo info(path);
-        if (info.exists() && info.isFile()) {
-            return info.absoluteFilePath();
+    const QString fromPath = QStandardPaths::findExecutable(adbName);
+    QStringList orderedCandidates = candidatePaths;
+    if (!fromPath.isEmpty()) {
+        orderedCandidates << fromPath;
+    }
+
+    QString firstExistingPath;
+    QStringList checkedPaths;
+    for (const QString& candidate : orderedCandidates) {
+        const QFileInfo info(candidate);
+        const QString absolutePath = info.absoluteFilePath();
+        if (absolutePath.isEmpty()) {
+            continue;
+        }
+        if (checkedPaths.contains(absolutePath, Qt::CaseInsensitive)) {
+            continue;
+        }
+        checkedPaths << absolutePath;
+
+        if (!info.exists() || !info.isFile()) {
+            continue;
+        }
+
+        if (firstExistingPath.isEmpty()) {
+            firstExistingPath = absolutePath;
+        }
+
+        if (isRunnableAdb(absolutePath)) {
+            return absolutePath;
         }
     }
 
-    const QString fromPath = QStandardPaths::findExecutable(adbName);
-    if (!fromPath.isEmpty()) {
-        return fromPath;
+    if (!firstExistingPath.isEmpty()) {
+        return firstExistingPath;
     }
 
-    return candidatePaths.first();
+    if (!fromPath.isEmpty()) {
+        return QFileInfo(fromPath).absoluteFilePath();
+    }
+
+    return QFileInfo(candidatePaths.first()).absoluteFilePath();
 }
 
 AdbProcess::AdbProcess(QObject *parent)
@@ -81,8 +136,28 @@ void AdbProcess::setAdbPath(const QString& path)
 bool AdbProcess::checkAdbVersion()
 {
     AdbResult result = execute({"version"}, 5000);
-    const QString combinedOutput = result.output + "\n" + result.error;
-    return result.success && combinedOutput.contains("Android Debug Bridge", Qt::CaseInsensitive);
+    if (result.success) {
+        return true;
+    }
+
+    const QString fallbackPath = QStandardPaths::findExecutable(adbExecutableName());
+    if (fallbackPath.isEmpty()) {
+        return false;
+    }
+
+    const QString currentPath = QFileInfo(m_adbPath).absoluteFilePath();
+    const QString fallbackAbsolutePath = QFileInfo(fallbackPath).absoluteFilePath();
+    if (currentPath.compare(fallbackAbsolutePath, Qt::CaseInsensitive) == 0) {
+        return false;
+    }
+
+    if (!isRunnableAdb(fallbackAbsolutePath)) {
+        return false;
+    }
+
+    setAdbPath(fallbackAbsolutePath);
+    result = execute({"version"}, 5000);
+    return result.success;
 }
 
 QStringList AdbProcess::getDevices()
