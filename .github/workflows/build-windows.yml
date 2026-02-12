@@ -350,8 +350,18 @@ jobs:
             "- Run Number: $env:GITHUB_RUN_NUMBER"
           ) -join "`n"
 
-          gh release view $tag --json tagName 1>$null 2>$null
-          if ($LASTEXITCODE -ne 0) {
+          $releaseExists = $false
+          $tagListText = gh release list --limit 100 --json tagName --jq ".[].tagName"
+          if ($LASTEXITCODE -eq 0 -and $tagListText) {
+            foreach ($line in ($tagListText -split "`r?`n")) {
+              if ($line.Trim() -eq $tag) {
+                $releaseExists = $true
+                break
+              }
+            }
+          }
+
+          if (-not $releaseExists) {
             Write-Host "Release tag does not exist, creating: $tag"
             for ($i = 1; $i -le $max; $i++) {
               gh release create $tag --title $title --notes $notes --target $env:GITHUB_SHA
