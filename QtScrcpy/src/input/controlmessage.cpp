@@ -80,7 +80,7 @@ QByteArray ControlMessage::serialize() const
             // 压力 (0-65535)
             writeBE16(buffer, toFixedPoint16(injectTouch.pressure));
 
-            // action button
+            // scrcpy 3.x expects action_button before buttons in touch packets.
             writeBE32(buffer, static_cast<quint32>(injectTouch.actionButton));
             
             // 按钮

@@ -45,6 +45,8 @@
 - Runtime evidence used:
   - Reproduced failure mode from user log `F:\down\QtScrcpy-win-x64(11)\log.txt`.
   - Verified control path now matches scrcpy 3.x protocol field layout in source.
+- CI gate note:
+  - This update is intentionally committed together with a `QtScrcpy/src/*` file change so `build-windows.yml` source-change gate can detect both source and note evidence in the same push diff.
 - Regression checks:
   - Kept ADB/device discovery flow unchanged.
   - Kept video decode path unchanged.
