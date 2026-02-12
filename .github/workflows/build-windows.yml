@@ -341,13 +341,13 @@ jobs:
           $title = "QtScrcpy Delivery v3 ($dateText UTC)"
           $asset = "release/QtScrcpy-win-x64.zip"
           $max = 5
-          $notes = @"
-Automated Windows package build.
-
-- Commit: $env:GITHUB_SHA
-- Run ID: $env:GITHUB_RUN_ID
-- Run Number: $env:GITHUB_RUN_NUMBER
-"@
+          $notes = @(
+            "Automated Windows package build.",
+            "",
+            "- Commit: $env:GITHUB_SHA",
+            "- Run ID: $env:GITHUB_RUN_ID",
+            "- Run Number: $env:GITHUB_RUN_NUMBER"
+          ) -join "`n"
 
           gh release view $tag *> $null
           if ($LASTEXITCODE -ne 0) {
