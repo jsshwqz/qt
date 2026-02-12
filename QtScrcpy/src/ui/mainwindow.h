@@ -22,7 +22,7 @@
 class VideoWidget;
 class ToolbarWidget;
 class VideoStream;
-class AudioStream;
+class AudioPlaybackStream;
 class ControlStream;
 class InputHandler;
 class ClipboardManager;
@@ -131,7 +131,7 @@ private:
     DeviceDiscovery* m_deviceDiscovery;
     ServerManager* m_serverManager;
     VideoStream* m_videoStream;
-    AudioStream* m_audioStream;
+    AudioPlaybackStream* m_audioStream;
     ControlStream* m_controlStream;
     InputHandler* m_inputHandler;
     ClipboardManager* m_clipboardManager;

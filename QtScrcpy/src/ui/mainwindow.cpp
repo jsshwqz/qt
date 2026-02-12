@@ -38,7 +38,7 @@ MainWindow::MainWindow(QWidget *parent)
     , m_deviceDiscovery(new DeviceDiscovery(this))
     , m_serverManager(new ServerManager(this))
     , m_videoStream(new VideoStream(this))
-    , m_audioStream(new AudioStream(this))
+    , m_audioStream(new AudioPlaybackStream(this))
     , m_controlStream(new ControlStream(this))
     , m_inputHandler(new InputHandler(this))
     , m_clipboardManager(new ClipboardManager(this))
@@ -270,17 +270,17 @@ void MainWindow::setupConnections()
             this, &MainWindow::onFrameReady);
     connect(m_videoStream, &VideoStream::deviceInfoReceived,
             this, &MainWindow::onDeviceInfoReceived);
-    connect(m_audioStream, &AudioStream::connected, this, [this]() {
+    connect(m_audioStream, &AudioPlaybackStream::connected, this, [this]() {
         if (m_isConnected) {
             m_statusLabel->setText("音频流已连接");
         }
     });
-    connect(m_audioStream, &AudioStream::disconnected, this, [this]() {
+    connect(m_audioStream, &AudioPlaybackStream::disconnected, this, [this]() {
         if (m_isConnected) {
             m_statusLabel->setText("音频流已断开");
         }
     });
-    connect(m_audioStream, &AudioStream::error, this, [this](const QString& message) {
+    connect(m_audioStream, &AudioPlaybackStream::error, this, [this](const QString& message) {
         qWarning() << "Audio stream error:" << message;
         if (m_isConnected) {
             m_statusLabel->setText("音频异常: " + message);

@@ -15,6 +15,7 @@
 - scrcpy audio forwarding requires Android 11+ (API 30+), but older devices were not explicitly gated before socket/arg setup.
 - Key handling attempted direct text injection from keypress path, which is brittle for IME-composed input.
 - Resize helpers used pure frame size without adding top-level non-video area.
+- Build failure on first attempt came from a type-name collision: `enum class AudioStream` (volume controller) vs newly added audio stream class name.
 
 ## 3) Changes Made
 - `QtScrcpy/src/server/servermanager.cpp`
@@ -30,6 +31,8 @@
   - Updated `onServerReady(videoPort, audioPort, controlPort)` and socket open order.
   - Added runtime fallback handling when audio stream is unavailable or unsupported.
   - Ensure disconnect path also closes audio stream.
+- `QtScrcpy/src/stream/audiostream.h/.cpp` + `QtScrcpy/src/ui/mainwindow.*`
+  - Renamed stream class to `AudioPlaybackStream` to avoid conflict with existing `AudioStream` enum type used by volume control code.
 - `QtScrcpy/src/input/inputhandler.cpp`
   - Adjusted keypress text-injection rule: fallback text injection only for `Qt::Key_unknown` composed input.
   - Regular printable keys continue through keycode path for stable control semantics.

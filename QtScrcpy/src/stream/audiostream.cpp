@@ -21,26 +21,26 @@ constexpr int kBytesPerSample = 2;
 constexpr int kMaxPendingPcmBytes = kSampleRate * kChannels * kBytesPerSample; // 1 second
 }
 
-AudioStream::AudioStream(QObject *parent)
+AudioPlaybackStream::AudioPlaybackStream(QObject *parent)
     : QObject(parent)
     , m_socket(new QTcpSocket(this))
     , m_audioSink(nullptr)
     , m_audioOutput(nullptr)
     , m_bytesReceived(0)
 {
-    connect(m_socket, &QTcpSocket::connected, this, &AudioStream::onConnected);
-    connect(m_socket, &QTcpSocket::disconnected, this, &AudioStream::onDisconnected);
-    connect(m_socket, &QTcpSocket::readyRead, this, &AudioStream::onReadyRead);
-    connect(m_socket, &QTcpSocket::errorOccurred, this, &AudioStream::onError);
+    connect(m_socket, &QTcpSocket::connected, this, &AudioPlaybackStream::onConnected);
+    connect(m_socket, &QTcpSocket::disconnected, this, &AudioPlaybackStream::onDisconnected);
+    connect(m_socket, &QTcpSocket::readyRead, this, &AudioPlaybackStream::onReadyRead);
+    connect(m_socket, &QTcpSocket::errorOccurred, this, &AudioPlaybackStream::onError);
 }
 
-AudioStream::~AudioStream()
+AudioPlaybackStream::~AudioPlaybackStream()
 {
     disconnect();
     stopPlayback();
 }
 
-bool AudioStream::connectToHost(const QString& host, quint16 port)
+bool AudioPlaybackStream::connectToHost(const QString& host, quint16 port)
 {
     if (m_socket->state() != QAbstractSocket::UnconnectedState) {
         return false;
@@ -53,19 +53,19 @@ bool AudioStream::connectToHost(const QString& host, quint16 port)
     return m_socket->waitForConnected(5000);
 }
 
-void AudioStream::disconnect()
+void AudioPlaybackStream::disconnect()
 {
     if (m_socket->state() != QAbstractSocket::UnconnectedState) {
         m_socket->disconnectFromHost();
     }
 }
 
-bool AudioStream::isConnected() const
+bool AudioPlaybackStream::isConnected() const
 {
     return m_socket->state() == QAbstractSocket::ConnectedState;
 }
 
-void AudioStream::onConnected()
+void AudioPlaybackStream::onConnected()
 {
     qDebug() << "Audio stream connected";
     if (!startPlayback()) {
@@ -74,14 +74,14 @@ void AudioStream::onConnected()
     emit connected();
 }
 
-void AudioStream::onDisconnected()
+void AudioPlaybackStream::onDisconnected()
 {
     qDebug() << "Audio stream disconnected";
     stopPlayback();
     emit disconnected();
 }
 
-void AudioStream::onReadyRead()
+void AudioPlaybackStream::onReadyRead()
 {
     const QByteArray data = m_socket->readAll();
     if (data.isEmpty()) {
@@ -99,7 +99,7 @@ void AudioStream::onReadyRead()
     drainPendingPcm();
 }
 
-void AudioStream::onError(QAbstractSocket::SocketError error)
+void AudioPlaybackStream::onError(QAbstractSocket::SocketError error)
 {
     Q_UNUSED(error)
     const QString message = m_socket->errorString();
@@ -107,7 +107,7 @@ void AudioStream::onError(QAbstractSocket::SocketError error)
     emit this->error(message);
 }
 
-bool AudioStream::startPlayback()
+bool AudioPlaybackStream::startPlayback()
 {
     stopPlayback();
 
@@ -143,7 +143,7 @@ bool AudioStream::startPlayback()
     return true;
 }
 
-void AudioStream::stopPlayback()
+void AudioPlaybackStream::stopPlayback()
 {
     m_pendingPcm.clear();
     m_audioOutput = nullptr;
@@ -155,7 +155,7 @@ void AudioStream::stopPlayback()
     }
 }
 
-void AudioStream::drainPendingPcm()
+void AudioPlaybackStream::drainPendingPcm()
 {
     if (!m_audioOutput || m_pendingPcm.isEmpty()) {
         return;

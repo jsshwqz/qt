@@ -20,13 +20,13 @@ class QIODevice;
  *
  * Current implementation expects 48kHz stereo s16le PCM stream.
  */
-class AudioStream : public QObject
+class AudioPlaybackStream : public QObject
 {
     Q_OBJECT
 
 public:
-    explicit AudioStream(QObject *parent = nullptr);
-    ~AudioStream();
+    explicit AudioPlaybackStream(QObject *parent = nullptr);
+    ~AudioPlaybackStream();
 
     bool connectToHost(const QString& host, quint16 port);
     void disconnect();
