@@ -261,15 +261,42 @@ void InputHandler::setVideoDisplaySize(const QSize& size)
 
 QPointF InputHandler::convertPosition(const QPoint& pos) const
 {
-    if (m_videoDisplaySize.isEmpty() || m_deviceScreenSize.isEmpty()) {
+    if (pos.x() < 0 || pos.y() < 0) {
+        return QPointF(-1, -1);
+    }
+
+    if (m_deviceScreenSize.isEmpty()) {
         return QPointF(pos);
     }
-    
-    // 将显示坐标转换为设备坐标
-    float scaleX = static_cast<float>(m_deviceScreenSize.width()) / m_videoDisplaySize.width();
-    float scaleY = static_cast<float>(m_deviceScreenSize.height()) / m_videoDisplaySize.height();
-    
-    return QPointF(pos.x() * scaleX, pos.y() * scaleY);
+
+    int x = pos.x();
+    int y = pos.y();
+    if (x >= m_deviceScreenSize.width()) {
+        x = m_deviceScreenSize.width() - 1;
+    }
+    if (y >= m_deviceScreenSize.height()) {
+        y = m_deviceScreenSize.height() - 1;
+    }
+
+    return QPointF(x, y);
+}
+
+int InputHandler::convertMouseButton(Qt::MouseButton button) const
+{
+    switch (button) {
+        case Qt::LeftButton:
+            return AMOTION_EVENT_BUTTON::PRIMARY;
+        case Qt::RightButton:
+            return AMOTION_EVENT_BUTTON::SECONDARY;
+        case Qt::MiddleButton:
+            return AMOTION_EVENT_BUTTON::TERTIARY;
+        case Qt::BackButton:
+            return AMOTION_EVENT_BUTTON::BACK;
+        case Qt::ForwardButton:
+            return AMOTION_EVENT_BUTTON::FORWARD;
+        default:
+            return 0;
+    }
 }
 
 int InputHandler::convertMouseButtons(Qt::MouseButtons buttons) const
@@ -277,19 +304,19 @@ int InputHandler::convertMouseButtons(Qt::MouseButtons buttons) const
     int result = 0;
     
     if (buttons & Qt::LeftButton) {
-        result |= AMOTION_EVENT_BUTTON::PRIMARY;
+        result |= convertMouseButton(Qt::LeftButton);
     }
     if (buttons & Qt::RightButton) {
-        result |= AMOTION_EVENT_BUTTON::SECONDARY;
+        result |= convertMouseButton(Qt::RightButton);
     }
     if (buttons & Qt::MiddleButton) {
-        result |= AMOTION_EVENT_BUTTON::TERTIARY;
+        result |= convertMouseButton(Qt::MiddleButton);
     }
     if (buttons & Qt::BackButton) {
-        result |= AMOTION_EVENT_BUTTON::BACK;
+        result |= convertMouseButton(Qt::BackButton);
     }
     if (buttons & Qt::ForwardButton) {
-        result |= AMOTION_EVENT_BUTTON::FORWARD;
+        result |= convertMouseButton(Qt::ForwardButton);
     }
     
     return result;
@@ -376,19 +403,23 @@ void InputHandler::handleMousePress(QMouseEvent* event)
     if (!m_enabled || !m_controlStream) {
         return;
     }
-    
+
     QPointF devicePos = convertPosition(event->pos());
-    
+    if (devicePos.x() < 0 || devicePos.y() < 0) {
+        return;
+    }
+
     m_mousePressed = true;
     m_lastMousePos = devicePos;
-    m_pointerId = 0; // 使用固定的pointerId
-    
+    m_pointerId = -1; // SC_POINTER_ID_MOUSE
+
     m_controlStream->sendTouch(
         static_cast<int>(AndroidMotionAction::Down),
         m_pointerId,
         devicePos,
         QSizeF(m_deviceScreenSize),
         1.0f,
+        convertMouseButton(event->button()),
         convertMouseButtons(event->buttons())
     );
 }
@@ -398,18 +429,22 @@ void InputHandler::handleMouseRelease(QMouseEvent* event)
     if (!m_enabled || !m_controlStream || !m_mousePressed) {
         return;
     }
-    
+
     QPointF devicePos = convertPosition(event->pos());
-    
+    if (devicePos.x() < 0 || devicePos.y() < 0) {
+        devicePos = m_lastMousePos;
+    }
+
     m_controlStream->sendTouch(
         static_cast<int>(AndroidMotionAction::Up),
         m_pointerId,
         devicePos,
         QSizeF(m_deviceScreenSize),
         0.0f,
+        convertMouseButton(event->button()),
         convertMouseButtons(event->buttons())
     );
-    
+
     m_mousePressed = false;
 }
 
@@ -418,10 +453,13 @@ void InputHandler::handleMouseMove(QMouseEvent* event)
     if (!m_enabled || !m_controlStream || !m_mousePressed) {
         return;
     }
-    
+
     QPointF devicePos = convertPosition(event->pos());
-    
-    // 只在位置改变时发送
+    if (devicePos.x() < 0 || devicePos.y() < 0) {
+        return;
+    }
+
+    // Only send when position changes
     if (devicePos != m_lastMousePos) {
         m_controlStream->sendTouch(
             static_cast<int>(AndroidMotionAction::Move),
@@ -429,9 +467,10 @@ void InputHandler::handleMouseMove(QMouseEvent* event)
             devicePos,
             QSizeF(m_deviceScreenSize),
             1.0f,
+            0,
             convertMouseButtons(event->buttons())
         );
-        
+
         m_lastMousePos = devicePos;
     }
 }
@@ -441,18 +480,22 @@ void InputHandler::handleWheel(QWheelEvent* event)
     if (!m_enabled || !m_controlStream) {
         return;
     }
-    
+
     QPointF devicePos = convertPosition(event->position().toPoint());
-    
-    // 计算滚动量（归一化到-1到1）
+    if (devicePos.x() < 0 || devicePos.y() < 0) {
+        return;
+    }
+
+    // Normalize wheel delta to -1..1 steps
     float hScroll = event->angleDelta().x() / 120.0f;
     float vScroll = event->angleDelta().y() / 120.0f;
-    
+
     m_controlStream->sendScroll(
         devicePos,
         QSizeF(m_deviceScreenSize),
         hScroll,
-        vScroll
+        vScroll,
+        convertMouseButtons(event->buttons())
     );
 }
 

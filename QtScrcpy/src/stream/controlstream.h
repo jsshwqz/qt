@@ -56,9 +56,9 @@ public:
     bool sendKeycode(int action, int keycode, int repeat, int metaState);
     bool sendText(const QString& text);
     bool sendTouch(int action, qint64 pointerId, const QPointF& position, 
-                   const QSizeF& screenSize, float pressure, int buttons);
+                   const QSizeF& screenSize, float pressure, int actionButton, int buttons);
     bool sendScroll(const QPointF& position, const QSizeF& screenSize, 
-                    float hScroll, float vScroll);
+                    float hScroll, float vScroll, int buttons);
     bool sendBackOrScreenOn(int action);
     bool expandNotificationPanel();
     bool expandSettingsPanel();

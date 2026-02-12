@@ -9,6 +9,7 @@
 #include <QtEndian>
 #include <QDataStream>
 #include <QDebug>
+#include <algorithm>
 
 // 辅助函数：写入大端字节
 static void writeBE16(QByteArray& buffer, quint16 value) {
@@ -34,10 +35,9 @@ static quint16 toFixedPoint16(float value) {
     return static_cast<quint16>(value * 65535.0f);
 }
 
-static quint32 toPosition(float x, float y, float screenWidth, float screenHeight) {
-    quint16 xPos = static_cast<quint16>(x * 65535.0f / screenWidth);
-    quint16 yPos = static_cast<quint16>(y * 65535.0f / screenHeight);
-    return (static_cast<quint32>(xPos) << 16) | yPos;
+static qint16 toSignedFixedPoint16(float value) {
+    const float clamped = std::max(-1.0f, std::min(1.0f, value));
+    return static_cast<qint16>(clamped * 32767.0f);
 }
 
 QByteArray ControlMessage::serialize() const
@@ -79,6 +79,9 @@ QByteArray ControlMessage::serialize() const
             
             // 压力 (0-65535)
             writeBE16(buffer, toFixedPoint16(injectTouch.pressure));
+
+            // action button
+            writeBE32(buffer, static_cast<quint32>(injectTouch.actionButton));
             
             // 按钮
             writeBE32(buffer, static_cast<quint32>(injectTouch.buttons));
@@ -97,8 +100,8 @@ QByteArray ControlMessage::serialize() const
             writeBE16(buffer, static_cast<quint16>(injectScroll.screenSize.height()));
             
             // 滚动距离 (使用定点表示)
-            qint16 hScroll = static_cast<qint16>(injectScroll.hScroll * 32767.0f);
-            qint16 vScroll = static_cast<qint16>(injectScroll.vScroll * 32767.0f);
+            qint16 hScroll = toSignedFixedPoint16(injectScroll.hScroll / 16.0f);
+            qint16 vScroll = toSignedFixedPoint16(injectScroll.vScroll / 16.0f);
             
             char hBytes[2], vBytes[2];
             qToBigEndian(hScroll, hBytes);
@@ -107,7 +110,7 @@ QByteArray ControlMessage::serialize() const
             buffer.append(vBytes, 2);
             
             // buttons (用于兼容性)
-            writeBE32(buffer, 0);
+            writeBE32(buffer, static_cast<quint32>(injectScroll.buttons));
             break;
         }
         

@@ -104,6 +104,7 @@ struct ControlMessage {
         QPointF position;
         QSizeF screenSize;
         float pressure;
+        int actionButton;
         int buttons;
     } injectTouch;
     
@@ -113,6 +114,7 @@ struct ControlMessage {
         QSizeF screenSize;
         float hScroll;
         float vScroll;
+        int buttons;
     } injectScroll;
     
     // 返回或点亮屏幕

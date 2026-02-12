@@ -106,6 +106,7 @@ signals:
 
 private:
     QPointF convertPosition(const QPoint& pos) const;
+    int convertMouseButton(Qt::MouseButton button) const;
     int convertMouseButtons(Qt::MouseButtons buttons) const;
     int convertKeyCode(int qtKey) const;
     int convertMetaState(Qt::KeyboardModifiers modifiers) const;

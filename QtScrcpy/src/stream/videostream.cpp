@@ -152,7 +152,12 @@ bool VideoStream::parseDeviceInfo()
         return false;
     }
 
-    m_deviceName = QString::fromUtf8(m_buffer.mid(offset, DEVICE_NAME_META_SIZE)).trimmed();
+    QByteArray deviceNameBytes = m_buffer.mid(offset, DEVICE_NAME_META_SIZE);
+    const int nullPos = deviceNameBytes.indexOf('\0');
+    if (nullPos >= 0) {
+        deviceNameBytes.truncate(nullPos);
+    }
+    m_deviceName = QString::fromUtf8(deviceNameBytes).trimmed();
     if (m_deviceName.isEmpty()) {
         m_deviceName = QStringLiteral("Android Device");
     }

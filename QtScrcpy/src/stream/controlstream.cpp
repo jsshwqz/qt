@@ -89,7 +89,7 @@ bool ControlStream::sendText(const QString& text)
 }
 
 bool ControlStream::sendTouch(int action, qint64 pointerId, const QPointF& position,
-                              const QSizeF& screenSize, float pressure, int buttons)
+                              const QSizeF& screenSize, float pressure, int actionButton, int buttons)
 {
     ControlMessage msg;
     msg.type = ControlMessageType::InjectTouch;
@@ -98,13 +98,14 @@ bool ControlStream::sendTouch(int action, qint64 pointerId, const QPointF& posit
     msg.injectTouch.position = position;
     msg.injectTouch.screenSize = screenSize;
     msg.injectTouch.pressure = pressure;
+    msg.injectTouch.actionButton = actionButton;
     msg.injectTouch.buttons = buttons;
     
     return sendMessage(msg);
 }
 
 bool ControlStream::sendScroll(const QPointF& position, const QSizeF& screenSize,
-                               float hScroll, float vScroll)
+                               float hScroll, float vScroll, int buttons)
 {
     ControlMessage msg;
     msg.type = ControlMessageType::InjectScroll;
@@ -112,6 +113,7 @@ bool ControlStream::sendScroll(const QPointF& position, const QSizeF& screenSize
     msg.injectScroll.screenSize = screenSize;
     msg.injectScroll.hScroll = hScroll;
     msg.injectScroll.vScroll = vScroll;
+    msg.injectScroll.buttons = buttons;
     
     return sendMessage(msg);
 }

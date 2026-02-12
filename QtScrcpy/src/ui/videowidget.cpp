@@ -239,9 +239,10 @@ void VideoWidget::calculateFps()
 void VideoWidget::mousePressEvent(QMouseEvent* event)
 {
     if (m_inputHandler && m_renderRect.contains(event->pos())) {
+        const QPoint mappedPos = mapToVideo(event->pos());
         QMouseEvent mappedEvent(
             event->type(),
-            mapToVideo(event->pos()),
+            QPointF(mappedPos),
             event->globalPosition(),
             event->button(),
             event->buttons(),
@@ -254,9 +255,10 @@ void VideoWidget::mousePressEvent(QMouseEvent* event)
 void VideoWidget::mouseReleaseEvent(QMouseEvent* event)
 {
     if (m_inputHandler) {
+        const QPoint mappedPos = mapToVideo(event->pos());
         QMouseEvent mappedEvent(
             event->type(),
-            mapToVideo(event->pos()),
+            QPointF(mappedPos),
             event->globalPosition(),
             event->button(),
             event->buttons(),
@@ -269,9 +271,13 @@ void VideoWidget::mouseReleaseEvent(QMouseEvent* event)
 void VideoWidget::mouseMoveEvent(QMouseEvent* event)
 {
     if (m_inputHandler) {
+        const QPoint mappedPos = mapToVideo(event->pos());
+        if (mappedPos.x() < 0 || mappedPos.y() < 0) {
+            return;
+        }
         QMouseEvent mappedEvent(
             event->type(),
-            mapToVideo(event->pos()),
+            QPointF(mappedPos),
             event->globalPosition(),
             event->button(),
             event->buttons(),
@@ -290,7 +296,24 @@ void VideoWidget::mouseDoubleClickEvent(QMouseEvent* event)
 void VideoWidget::wheelEvent(QWheelEvent* event)
 {
     if (m_inputHandler) {
-        m_inputHandler->handleWheel(event);
+        const QPoint mappedPos = mapToVideo(event->position().toPoint());
+        if (mappedPos.x() < 0 || mappedPos.y() < 0) {
+            return;
+        }
+
+        QWheelEvent mappedEvent(
+            QPointF(mappedPos),
+            event->globalPosition(),
+            event->pixelDelta(),
+            event->angleDelta(),
+            event->buttons(),
+            event->modifiers(),
+            event->phase(),
+            event->inverted(),
+            event->source(),
+            event->pointingDevice()
+        );
+        m_inputHandler->handleWheel(&mappedEvent);
     }
 }
 
