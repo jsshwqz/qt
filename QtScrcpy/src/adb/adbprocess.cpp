@@ -170,17 +170,26 @@ QStringList AdbProcess::getDevices()
     }
     
     // 解析输出
-    QStringList lines = result.output.split('\n', Qt::SkipEmptyParts);
-    for (const QString& line : lines) {
-        if (line.startsWith("List of devices")) {
+    const QStringList lines = result.output.split('\n', Qt::SkipEmptyParts);
+    const QRegularExpression linePattern(
+        "^\\s*(\\S+)\\s+(device|unauthorized|offline)\\b",
+        QRegularExpression::CaseInsensitiveOption
+    );
+    for (const QString& rawLine : lines) {
+        const QString line = rawLine.trimmed();
+        if (line.isEmpty()) {
             continue;
         }
-        
-        if (line.contains("\tdevice") || line.contains("\tunauthorized")) {
-            QString serial = line.split('\t').first().trimmed();
-            if (!serial.isEmpty()) {
-                devices.append(serial);
-            }
+        if (line.startsWith("List of devices", Qt::CaseInsensitive)) {
+            continue;
+        }
+        const QRegularExpressionMatch match = linePattern.match(line);
+        if (!match.hasMatch()) {
+            continue;
+        }
+        const QString serial = match.captured(1).trimmed();
+        if (!serial.isEmpty()) {
+            devices.append(serial);
         }
     }
     
