@@ -213,7 +213,7 @@ QStringList DeviceDiscovery::getLocalNetworkSegments() const
 
     constexpr int kSingleTargetSegment = 1;
 
-    // 1) Prefer the currently connected Wi-Fi subnet.
+    // 1) Prefer the currently connected Wi-Fi subnet as a single fast target.
     const QStringList connectedWifi = collectSegments(true, true, kSingleTargetSegment);
     if (!connectedWifi.isEmpty()) {
         return connectedWifi;
