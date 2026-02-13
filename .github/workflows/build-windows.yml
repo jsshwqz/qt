@@ -167,6 +167,10 @@ jobs:
           Write-Host "adb.exe verified:"
           Write-Host $adbText
           Copy-Item "QtScrcpy/resources/scrcpy-server" (Join-Path $outDir "scrcpy-server") -Force
+          if (!(Test-Path "QtScrcpy/resources/sndcpy.apk")) {
+            throw "sndcpy.apk missing at QtScrcpy/resources/sndcpy.apk"
+          }
+          Copy-Item "QtScrcpy/resources/sndcpy.apk" (Join-Path $outDir "sndcpy.apk") -Force
 
           # FFmpeg runtime (DLLs)
           #
@@ -270,6 +274,9 @@ jobs:
               throw "ADB file missing in package directory: $name"
             }
           }
+          if (!(Test-Path (Join-Path $pkgDir "sndcpy.apk"))) {
+            throw "sndcpy.apk missing in package directory"
+          }
 
           $runDebugLines = @(
             '@echo off'
@@ -317,7 +324,7 @@ jobs:
           $pkgDir = "release/QtScrcpy-win-x64"
           Write-Host "== Runtime summary =="
           Get-ChildItem $pkgDir -File |
-            Where-Object { $_.Name -match '^(QtScrcpy\.exe|adb\.exe|AdbWinApi\.dll|AdbWinUsbApi\.dll|avcodec-|avformat-|avutil-|swscale-|swresample-)' } |
+            Where-Object { $_.Name -match '^(QtScrcpy\.exe|adb\.exe|AdbWinApi\.dll|AdbWinUsbApi\.dll|sndcpy\.apk|avcodec-|avformat-|avutil-|swscale-|swresample-)' } |
             Sort-Object Name |
             Select-Object Name,Length |
             Format-Table -AutoSize

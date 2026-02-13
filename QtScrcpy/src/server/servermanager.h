@@ -142,6 +142,11 @@ private:
     bool pushServer();
     bool setupPortForward();
     bool startServer();
+    bool prepareAudioFallbackIfNeeded();
+    bool prepareSndcpyFallback();
+    bool ensureSndcpyInstalled(const QString& apkPath);
+    bool launchSndcpyApp();
+    static QString sndcpyApkPath();
     bool tryHandleVersionMismatch(const QString& text);
     void setState(ServerState state);
     QStringList buildServerArgs() const;
@@ -162,10 +167,13 @@ private:
     int m_startAttemptId;
     int m_versionRetryCount;
     bool m_audioEnabled;
+    bool m_useSndcpyFallback;
     int m_deviceSdk;
     
     static const QString SERVER_FILE_NAME;
     static const QString SERVER_PATH_ON_DEVICE;
+    static const QString SNDCPY_PACKAGE_NAME;
+    static const QString SNDCPY_ACTIVITY_NAME;
     static const int SERVER_VERSION = 2;  // 协议版本
 };
 

@@ -12,9 +12,12 @@
 #include <QTcpServer>
 #include <QDebug>
 #include <QRegularExpression>
+#include <QThread>
 
 const QString ServerManager::SERVER_FILE_NAME = "scrcpy-server";
 const QString ServerManager::SERVER_PATH_ON_DEVICE = "/data/local/tmp/scrcpy-server.jar";
+const QString ServerManager::SNDCPY_PACKAGE_NAME = "com.rom1v.sndcpy";
+const QString ServerManager::SNDCPY_ACTIVITY_NAME = "com.rom1v.sndcpy/.MainActivity";
 
 ServerManager::ServerManager(QObject *parent)
     : QObject(parent)
@@ -29,6 +32,7 @@ ServerManager::ServerManager(QObject *parent)
     , m_startAttemptId(0)
     , m_versionRetryCount(0)
     , m_audioEnabled(false)
+    , m_useSndcpyFallback(false)
     , m_deviceSdk(0)
 {
     m_startTimer->setSingleShot(true);
@@ -60,6 +64,22 @@ QString ServerManager::serverPath()
     return QString();
 }
 
+QString ServerManager::sndcpyApkPath()
+{
+    const QString appDir = QCoreApplication::applicationDirPath();
+    const QString directPath = appDir + "/sndcpy.apk";
+    if (QFileInfo::exists(directPath)) {
+        return directPath;
+    }
+
+    const QString resourcePath = appDir + "/resources/sndcpy.apk";
+    if (QFileInfo::exists(resourcePath)) {
+        return resourcePath;
+    }
+
+    return QString();
+}
+
 bool ServerManager::start()
 {
     if (m_state != ServerState::Idle) {
@@ -83,6 +103,7 @@ bool ServerManager::start()
     m_versionRetryCount = 0;
     m_deviceSdk = 0;
     m_audioEnabled = false;
+    m_useSndcpyFallback = false;
 
     const QString sdkValue = m_adb->getDeviceProperty(m_serial, "ro.build.version.sdk");
     bool sdkOk = false;
@@ -90,12 +111,20 @@ bool ServerManager::start()
     if (sdkOk) {
         m_deviceSdk = sdkInt;
         m_audioEnabled = (sdkInt >= 30); // Android 11+
+        m_useSndcpyFallback = (sdkInt > 0 && sdkInt < 30); // Android 10 and below
     } else {
         // Keep audio disabled if SDK cannot be detected to avoid protocol mismatch.
         qWarning() << "Failed to parse device SDK from:" << sdkValue;
     }
 
-    qDebug() << "Device SDK:" << m_deviceSdk << "audioEnabled:" << m_audioEnabled;
+    qDebug() << "Device SDK:" << m_deviceSdk
+             << "audioEnabled:" << m_audioEnabled
+             << "sndcpyFallback:" << m_useSndcpyFallback;
+
+    // Prepare optional audio fallback before server bootstrap.
+    if (!prepareAudioFallbackIfNeeded()) {
+        qWarning() << "Audio fallback preparation failed; continue without audio stream";
+    }
     
     // 寮€濮嬫帹閫佹湇鍔＄
     return pushServer();
@@ -129,10 +158,15 @@ void ServerManager::stop()
     if (m_controlPort > 0) {
         m_adb->removeForward(m_serial, m_controlPort);
     }
+
+    if (m_useSndcpyFallback && !m_serial.isEmpty()) {
+        m_adb->executeForDevice(m_serial, {"shell", "am", "force-stop", SNDCPY_PACKAGE_NAME}, 3000);
+    }
     
     m_videoPort = 0;
     m_audioPort = 0;
     m_controlPort = 0;
+    m_useSndcpyFallback = false;
     
     setState(ServerState::Idle);
     emit serverStopped();
@@ -162,7 +196,7 @@ bool ServerManager::pushServer()
 bool ServerManager::setupPortForward()
 {
     m_videoPort = findFreePort(27183);
-    if (m_audioEnabled) {
+    if (m_audioEnabled || m_useSndcpyFallback) {
         m_audioPort = findFreePort(m_videoPort + 1);
         m_controlPort = findFreePort(m_audioPort + 1);
     } else {
@@ -178,9 +212,10 @@ bool ServerManager::setupPortForward()
         return false;
     }
 
-    if (m_audioEnabled) {
-        if (!m_adb->forwardToLocalAbstract(m_serial, m_audioPort, "scrcpy")) {
-            emit error("Failed to setup audio port forwarding");
+    if (m_audioEnabled || m_useSndcpyFallback) {
+        const QString audioSocket = m_audioEnabled ? "scrcpy" : "sndcpy";
+        if (!m_adb->forwardToLocalAbstract(m_serial, m_audioPort, audioSocket)) {
+            emit error(QString("Failed to setup audio port forwarding (%1)").arg(audioSocket));
             m_adb->removeForward(m_serial, m_videoPort);
             setState(ServerState::Error);
             return false;
@@ -190,11 +225,20 @@ bool ServerManager::setupPortForward()
     if (!m_adb->forwardToLocalAbstract(m_serial, m_controlPort, "scrcpy")) {
         emit error("Failed to setup control port forwarding");
         m_adb->removeForward(m_serial, m_videoPort);
-        if (m_audioEnabled && m_audioPort > 0) {
+        if ((m_audioEnabled || m_useSndcpyFallback) && m_audioPort > 0) {
             m_adb->removeForward(m_serial, m_audioPort);
         }
         setState(ServerState::Error);
         return false;
+    }
+
+    if (m_useSndcpyFallback && m_audioPort > 0) {
+        if (!prepareSndcpyFallback()) {
+            qWarning() << "sndcpy fallback setup failed, continue without audio fallback";
+            m_adb->removeForward(m_serial, m_audioPort);
+            m_audioPort = 0;
+            m_useSndcpyFallback = false;
+        }
     }
 
     return startServer();
@@ -288,6 +332,97 @@ void ServerManager::onServerOutput()
     if (!error.isEmpty()) {
         qDebug() << "Server error:" << error;
     }
+}
+
+bool ServerManager::prepareAudioFallbackIfNeeded()
+{
+    if (!m_useSndcpyFallback) {
+        return true;
+    }
+
+    const QString apkPath = sndcpyApkPath();
+    if (apkPath.isEmpty()) {
+        qWarning() << "sndcpy fallback requested but sndcpy.apk is missing next to executable";
+        m_useSndcpyFallback = false;
+        return false;
+    }
+
+    if (!ensureSndcpyInstalled(apkPath)) {
+        qWarning() << "Failed to install or detect sndcpy on device";
+        m_useSndcpyFallback = false;
+        return false;
+    }
+
+    return true;
+}
+
+bool ServerManager::prepareSndcpyFallback()
+{
+    if (!m_useSndcpyFallback) {
+        return true;
+    }
+    return launchSndcpyApp();
+}
+
+bool ServerManager::ensureSndcpyInstalled(const QString& apkPath)
+{
+    const auto queryResult = m_adb->executeForDevice(
+        m_serial, {"shell", "pm", "path", SNDCPY_PACKAGE_NAME}, 8000);
+
+    if (queryResult.success && queryResult.output.contains("package:")) {
+        qDebug() << "sndcpy already installed on device";
+        return true;
+    }
+
+    // Best effort cleanup before reinstall.
+    m_adb->executeForDevice(m_serial, {"uninstall", SNDCPY_PACKAGE_NAME}, 10000);
+
+    const auto installResult = m_adb->executeForDevice(
+        m_serial, {"install", "-t", "-r", "-g", apkPath}, 90000);
+    const QString installText = installResult.output + "\n" + installResult.error;
+    const bool ok = installResult.success &&
+                    installText.contains("Success", Qt::CaseInsensitive);
+    if (!ok) {
+        qWarning() << "sndcpy install failed:" << installText;
+    }
+    return ok;
+}
+
+bool ServerManager::launchSndcpyApp()
+{
+    const auto appopsResult = m_adb->executeForDevice(
+        m_serial, {"shell", "appops", "set", SNDCPY_PACKAGE_NAME, "PROJECT_MEDIA", "allow"}, 6000);
+    if (!appopsResult.success) {
+        qWarning() << "sndcpy appops setup failed:" << appopsResult.error;
+    }
+
+    const auto startResult = m_adb->executeForDevice(
+        m_serial, {"shell", "am", "start", "-n", SNDCPY_ACTIVITY_NAME}, 10000);
+    if (!startResult.success) {
+        qWarning() << "Failed to start sndcpy activity:" << startResult.error;
+        return false;
+    }
+
+    for (int i = 0; i < 20; ++i) {
+        const auto pidResult = m_adb->executeForDevice(
+            m_serial, {"shell", "pidof", SNDCPY_PACKAGE_NAME}, 3000);
+        if (pidResult.success && !pidResult.output.trimmed().isEmpty()) {
+            qDebug() << "sndcpy process is running with pid(s):" << pidResult.output.trimmed();
+            return true;
+        }
+
+        const auto psResult = m_adb->executeForDevice(
+            m_serial, {"shell", QString("ps | grep %1").arg(SNDCPY_PACKAGE_NAME)}, 3000);
+        if (psResult.success && psResult.output.contains(SNDCPY_PACKAGE_NAME)) {
+            qDebug() << "sndcpy process detected via ps";
+            return true;
+        }
+
+        QThread::msleep(150);
+    }
+
+    qWarning() << "sndcpy process did not appear in time";
+    return false;
 }
 
 bool ServerManager::tryHandleVersionMismatch(const QString& text)
