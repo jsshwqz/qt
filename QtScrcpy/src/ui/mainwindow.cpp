@@ -1033,13 +1033,45 @@ QString MainWindow::resolveDeviceWifiIp(AdbProcess& adb, const QString& serial) 
         return QString();
     };
 
-    const QStringList shellCommands = {
+    // Prefer wlan0-focused commands first to avoid selecting VPN/tunnel addresses.
+    const QStringList wlanFocusedCommands = {
         "ip -f inet addr show wlan0",
-        "ip -f inet addr show",
-        "ifconfig wlan0",
-        "ip route"
+        "ip -f inet addr show dev wlan0"
     };
-    for (const QString& cmd : shellCommands) {
+    for (const QString& cmd : wlanFocusedCommands) {
+        const auto result = adb.executeForDevice(serial, {"shell", cmd}, 6000);
+        if (!result.success) {
+            continue;
+        }
+        const QString candidate = extractFirstIpv4(result.output + "\n" + result.error);
+        if (!candidate.isEmpty()) {
+            return candidate;
+        }
+    }
+
+    // Route fallback: only accept source address on wlan0 route lines.
+    {
+        const auto result = adb.executeForDevice(serial, {"shell", "ip route"}, 6000);
+        if (result.success) {
+            static const QRegularExpression wlanRouteSrcRegex(
+                "dev\\s+wlan0\\b[^\\n\\r]*\\bsrc\\s+((?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(?:\\.(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3})",
+                QRegularExpression::CaseInsensitiveOption);
+            const QString routeText = result.output + "\n" + result.error;
+            const QRegularExpressionMatch match = wlanRouteSrcRegex.match(routeText);
+            if (match.hasMatch()) {
+                const QString candidate = match.captured(1).trimmed();
+                if (!candidate.isEmpty()) {
+                    return candidate;
+                }
+            }
+        }
+    }
+
+    const QStringList genericCommands = {
+        "ip -f inet addr show",
+        "ifconfig wlan0"
+    };
+    for (const QString& cmd : genericCommands) {
         const auto result = adb.executeForDevice(serial, {"shell", cmd}, 6000);
         if (!result.success) {
             continue;
@@ -1099,7 +1131,14 @@ bool MainWindow::prepareWirelessFromUsb(int port)
         return false;
     }
 
-    const QString wifiIp = resolveDeviceWifiIp(*adb, usbSerial);
+    // After `adb tcpip`, device transport may restart briefly.
+    QString wifiIp;
+    for (int i = 0; i < 12 && wifiIp.isEmpty(); ++i) {
+        if (i > 0) {
+            QThread::msleep(300);
+        }
+        wifiIp = resolveDeviceWifiIp(*adb, usbSerial);
+    }
     if (wifiIp.isEmpty()) {
         qWarning() << "Failed to resolve device Wi-Fi IP from USB device:" << usbSerial;
         return false;
