@@ -118,7 +118,8 @@ void VideoWidget::setFullScreen(bool fullscreen)
         if (parentWindow) {
             parentWindow->showFullScreen();
         }
-        setCursor(Qt::BlankCursor);
+        // Keep cursor visible in fullscreen so users can locate text input areas.
+        setCursor(Qt::ArrowCursor);
     } else {
         QWidget* parentWindow = window();
         if (parentWindow) {
