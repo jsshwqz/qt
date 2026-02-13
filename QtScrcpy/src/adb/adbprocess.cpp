@@ -170,6 +170,18 @@ QStringList AdbProcess::getDevices()
 {
     QStringList devices;
     AdbResult result = execute({"devices"}, 5000);
+
+    if (!result.success) {
+        const QString errorText = (result.error + "\n" + result.output).toLower();
+        if (errorText.contains("protocol fault")
+            || errorText.contains("connection reset")
+            || errorText.contains("failed to check server version")
+            || errorText.contains("daemon not running")) {
+            // USB/Wi-Fi transport switch can transiently disrupt daemon status checks.
+            execute({"start-server"}, 5000);
+            result = execute({"devices"}, 5000);
+        }
+    }
     
     if (!result.success) {
         return devices;
@@ -179,7 +191,7 @@ QStringList AdbProcess::getDevices()
     const QString combinedOutput = result.output + "\n" + result.error;
     const QStringList lines = combinedOutput.split('\n', Qt::SkipEmptyParts);
     const QRegularExpression linePattern(
-        "^\\s*(\\S+)\\s+(device|unauthorized|offline)\\b",
+        "^\\s*(\\S+)\\s+(device)\\b",
         QRegularExpression::CaseInsensitiveOption
     );
     for (const QString& rawLine : lines) {
@@ -373,7 +385,7 @@ bool AdbProcess::removeForward(const QString& serial, int localPort)
 
 QString AdbProcess::getDeviceProperty(const QString& serial, const QString& property)
 {
-    AdbResult result = shell(serial, QString("getprop %1").arg(property));
+    AdbResult result = executeForDevice(serial, {"shell", QString("getprop %1").arg(property)}, 8000);
     if (result.success) {
         return result.output.trimmed();
     }
@@ -391,7 +403,7 @@ QString AdbProcess::getDeviceModel(const QString& serial)
 
 QSize AdbProcess::getDeviceResolution(const QString& serial)
 {
-    AdbResult result = shell(serial, "wm size");
+    AdbResult result = executeForDevice(serial, {"shell", "wm size"}, 8000);
     
     if (result.success) {
         // 解析 "Physical size: 1080x1920"

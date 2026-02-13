@@ -42,6 +42,11 @@
 #include <QHostAddress>
 #include <QThread>
 
+namespace {
+constexpr int kScanNoProgressTimeoutMs = 2 * 60 * 1000;
+constexpr int kConnectNoProgressTimeoutMs = 2 * 60 * 1000;
+}
+
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , m_stackedWidget(new QStackedWidget(this))
@@ -58,9 +63,14 @@ MainWindow::MainWindow(QWidget *parent)
     , m_volumeController(nullptr)
     , m_isConnected(false)
     , m_autoScanTimer(new QTimer(this))
+    , m_operationWatchdogTimer(new QTimer(this))
     , m_autoScanEnabled(true)
     , m_autoScanPausedByUser(false)
     , m_manualScanInProgress(false)
+    , m_pendingOperation(PendingOperation::None)
+    , m_pendingOperationTimeoutMs(0)
+    , m_lastScanProgressValue(0)
+    , m_operationTimeoutHandling(false)
 {
     setupUi();
     setupMenuBar();
@@ -72,6 +82,10 @@ MainWindow::MainWindow(QWidget *parent)
         triggerAutoWirelessScan(false);
     });
     m_autoScanTimer->start();
+
+    m_operationWatchdogTimer->setInterval(1000);
+    connect(m_operationWatchdogTimer, &QTimer::timeout, this, &MainWindow::onOperationWatchdogTick);
+    m_operationWatchdogTimer->start();
 
     m_deviceManager->startMonitoring();
     showDeviceList();
@@ -427,6 +441,7 @@ void MainWindow::onDevicesUpdated(const QList<DeviceInfo>& devices)
 
     if (hasUsb && m_deviceDiscovery->isScanning() && !m_manualScanInProgress) {
         m_deviceDiscovery->stopScan();
+        stopPendingOperation(PendingOperation::Scanning);
         m_scanBtn->setText("扫描无线设备");
         m_scanProgress->setVisible(false);
         m_statusLabel->setText("检测到 USB 设备，已停止无线扫描");
@@ -447,6 +462,7 @@ void MainWindow::onScanDevices()
 {
     if (m_deviceDiscovery->isScanning() || m_scanProgress->isVisible()) {
         m_deviceDiscovery->stopScan();
+        stopPendingOperation(PendingOperation::Scanning);
         m_manualScanInProgress = false;
         m_autoScanPausedByUser = true;
         m_scanBtn->setText("扫描无线设备");
@@ -469,7 +485,9 @@ void MainWindow::onScanDevices()
     m_scanBtn->setText("停止扫描");
     m_scanProgress->setVisible(true);
     m_scanProgress->setValue(0);
+    m_lastScanProgressValue = 0;
     m_statusLabel->setText("正在扫描当前网段中的无线 ADB 设备...");
+    startPendingOperation(PendingOperation::Scanning, kScanNoProgressTimeoutMs);
     m_deviceDiscovery->startScan();
 }
 
@@ -477,10 +495,15 @@ void MainWindow::onScanProgress(int current, int total)
 {
     m_scanProgress->setMaximum(total);
     m_scanProgress->setValue(current);
+    if (current > m_lastScanProgressValue) {
+        m_lastScanProgressValue = current;
+        markPendingOperationProgress();
+    }
 }
 
 void MainWindow::onScanFinished(const QList<DiscoveredDevice>& devices)
 {
+    stopPendingOperation(PendingOperation::Scanning);
     m_scanBtn->setText("扫描无线设备");
     m_scanProgress->setVisible(false);
     m_manualScanInProgress = false;
@@ -543,6 +566,7 @@ void MainWindow::connectToDevice(const QString& serial)
 
     if (m_deviceDiscovery->isScanning()) {
         m_deviceDiscovery->stopScan();
+        stopPendingOperation(PendingOperation::Scanning);
     }
     m_scanProgress->setVisible(false);
     m_scanBtn->setText("扫描无线设备");
@@ -564,11 +588,14 @@ void MainWindow::connectToDevice(const QString& serial)
             this, &MainWindow::onTransferCompleted);
 
     m_serverManager->setSerial(serial);
+    startPendingOperation(PendingOperation::Connecting, kConnectNoProgressTimeoutMs);
     m_serverManager->start();
 }
 
 void MainWindow::disconnectFromDevice()
 {
+    stopPendingOperation();
+
     if (!m_isConnected && m_currentSerial.isEmpty()) {
         return;
     }
@@ -629,6 +656,71 @@ void MainWindow::showVideoView()
     m_videoWidget->setFocus(Qt::OtherFocusReason);
 }
 
+void MainWindow::startPendingOperation(PendingOperation operation, int timeoutMs)
+{
+    m_pendingOperation = operation;
+    m_pendingOperationTimeoutMs = qMax(1000, timeoutMs);
+    m_pendingOperationProgressClock.restart();
+}
+
+void MainWindow::markPendingOperationProgress()
+{
+    if (m_pendingOperation == PendingOperation::None) {
+        return;
+    }
+    m_pendingOperationProgressClock.restart();
+}
+
+void MainWindow::stopPendingOperation(PendingOperation operation)
+{
+    if (operation != PendingOperation::None && m_pendingOperation != operation) {
+        return;
+    }
+    m_pendingOperation = PendingOperation::None;
+    m_pendingOperationTimeoutMs = 0;
+    m_pendingOperationProgressClock.invalidate();
+}
+
+void MainWindow::onOperationWatchdogTick()
+{
+    if (m_operationTimeoutHandling || m_pendingOperation == PendingOperation::None) {
+        return;
+    }
+    if (!m_pendingOperationProgressClock.isValid() || m_pendingOperationTimeoutMs <= 0) {
+        return;
+    }
+    if (m_pendingOperationProgressClock.elapsed() < m_pendingOperationTimeoutMs) {
+        return;
+    }
+
+    m_operationTimeoutHandling = true;
+    const PendingOperation timedOut = m_pendingOperation;
+    stopPendingOperation(timedOut);
+
+    if (timedOut == PendingOperation::Scanning) {
+        if (m_deviceDiscovery->isScanning()) {
+            m_deviceDiscovery->stopScan();
+        }
+        m_scanProgress->setVisible(false);
+        m_scanBtn->setText("扫描无线设备");
+        m_manualScanInProgress = false;
+        m_autoScanPausedByUser = true;
+        m_statusLabel->setText("扫描长时间无进度，已自动停止。");
+    } else if (timedOut == PendingOperation::Connecting) {
+        const QString serial = m_currentSerial;
+        disconnectFromDevice();
+        showDeviceList();
+        m_statusLabel->setText("连接长时间无进度，已自动停止。");
+        QMessageBox::warning(
+            this,
+            "连接超时",
+            QString("连接设备 %1 超过 2 分钟无进度，已自动停止。")
+                .arg(serial.isEmpty() ? "unknown" : serial));
+    }
+
+    m_operationTimeoutHandling = false;
+}
+
 void MainWindow::triggerAutoWirelessScan(bool force)
 {
     if (!m_autoScanEnabled || m_isConnected) {
@@ -661,12 +753,18 @@ void MainWindow::triggerAutoWirelessScan(bool force)
     m_scanBtn->setText("停止扫描");
     m_scanProgress->setVisible(true);
     m_scanProgress->setValue(0);
+    m_lastScanProgressValue = 0;
     m_statusLabel->setText("自动扫描 Wi-Fi 网段中...");
+    startPendingOperation(PendingOperation::Scanning, kScanNoProgressTimeoutMs);
     m_deviceDiscovery->startScan();
 }
 
 void MainWindow::onServerStateChanged(ServerManager::ServerState state)
 {
+    if (m_pendingOperation == PendingOperation::Connecting) {
+        markPendingOperationProgress();
+    }
+
     switch (state) {
     case ServerManager::ServerState::Pushing:
         m_statusLabel->setText("正在推送服务端到设备...");
@@ -739,6 +837,7 @@ void MainWindow::onServerReady(int videoPort, int audioPort, int controlPort)
 
     m_isConnected = true;
     m_toolbar->setConnected(true);
+    stopPendingOperation(PendingOperation::Connecting);
     showVideoView();
 }
 

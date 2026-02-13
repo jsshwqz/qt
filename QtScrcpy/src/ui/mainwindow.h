@@ -14,6 +14,7 @@
 #include <QProgressBar>
 #include <QStackedWidget>
 #include <QTimer>
+#include <QElapsedTimer>
 
 #include "adb/devicemanager.h"
 #include "adb/devicediscovery.h"
@@ -101,6 +102,12 @@ private slots:
     void onSyncClipboardFromDevice();
 
 private:
+    enum class PendingOperation {
+        None,
+        Scanning,
+        Connecting
+    };
+
     void setupUi();
     void setupMenuBar();
     void setupStatusBar();
@@ -116,6 +123,10 @@ private:
     bool prepareWirelessFromUsb(int port = 5555);
     QString resolveDeviceWifiIp(AdbProcess& adb, const QString& serial) const;
     void rememberNetworkSegment(const QString& ipAddress);
+    void startPendingOperation(PendingOperation operation, int timeoutMs);
+    void markPendingOperationProgress();
+    void stopPendingOperation(PendingOperation operation = PendingOperation::None);
+    void onOperationWatchdogTick();
     
     // UI组件
     QStackedWidget* m_stackedWidget;
@@ -155,9 +166,15 @@ private:
     QString m_currentSerial;
     bool m_isConnected;
     QTimer* m_autoScanTimer;
+    QTimer* m_operationWatchdogTimer;
     bool m_autoScanEnabled;
     bool m_autoScanPausedByUser;
     bool m_manualScanInProgress;
+    PendingOperation m_pendingOperation;
+    int m_pendingOperationTimeoutMs;
+    QElapsedTimer m_pendingOperationProgressClock;
+    int m_lastScanProgressValue;
+    bool m_operationTimeoutHandling;
 };
 
 #endif // MAINWINDOW_H
