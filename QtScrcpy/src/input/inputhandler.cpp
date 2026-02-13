@@ -514,17 +514,7 @@ void InputHandler::handleKeyPress(QKeyEvent* event)
     if (event->key() == Qt::Key_unknown &&
         !event->text().isEmpty() &&
         !(event->modifiers() & (Qt::ControlModifier | Qt::AltModifier | Qt::MetaModifier))) {
-        bool hasNonAscii = false;
-        for (const QChar& ch : event->text()) {
-            if (ch.unicode() > 0x7F) {
-                hasNonAscii = true;
-                break;
-            }
-        }
-
-        if (!hasNonAscii) {
-            handleTextInput(event->text());
-        }
+        handleTextInput(event->text());
         return;
     }
     
@@ -565,21 +555,6 @@ void InputHandler::handleKeyRelease(QKeyEvent* event)
 void InputHandler::handleTextInput(const QString& text)
 {
     if (!m_enabled || !m_controlStream || text.isEmpty()) {
-        return;
-    }
-
-    bool hasNonAscii = false;
-    for (const QChar& ch : text) {
-        if (ch.unicode() > 0x7F) {
-            hasNonAscii = true;
-            break;
-        }
-    }
-
-    // Direct-input mode only: avoid clipboard fallback and rely on device-side
-    // IME composition for non-ASCII text.
-    if (hasNonAscii) {
-        qDebug() << "Skipping non-ASCII committed text in direct-input mode:" << text;
         return;
     }
 

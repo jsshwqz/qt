@@ -22,18 +22,6 @@
 #include <QInputMethod>
 #include <QDebug>
 
-namespace {
-bool isAsciiText(const QString& text)
-{
-    for (const QChar& ch : text) {
-        if (ch.unicode() > 0x7F) {
-            return false;
-        }
-    }
-    return true;
-}
-}
-
 VideoWidget::VideoWidget(QWidget *parent)
     : QWidget(parent)
     , m_inputHandler(nullptr)
@@ -378,9 +366,7 @@ void VideoWidget::inputMethodEvent(QInputMethodEvent* event)
     if (m_inputHandler && event) {
         const QString committedText = event->commitString();
         if (!committedText.isEmpty()) {
-            if (isAsciiText(committedText)) {
-                m_inputHandler->handleTextInput(committedText);
-            }
+            m_inputHandler->handleTextInput(committedText);
             m_imeComposing = false;
         }
     }

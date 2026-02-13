@@ -145,6 +145,7 @@ private:
     QTimer* m_autoScanTimer;
     bool m_autoScanEnabled;
     bool m_autoScanPausedByUser;
+    bool m_manualScanInProgress;
 };
 
 #endif // MAINWINDOW_H

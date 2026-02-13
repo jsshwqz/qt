@@ -49,6 +49,7 @@ MainWindow::MainWindow(QWidget *parent)
     , m_autoScanTimer(new QTimer(this))
     , m_autoScanEnabled(true)
     , m_autoScanPausedByUser(false)
+    , m_manualScanInProgress(false)
 {
     setupUi();
     setupMenuBar();
@@ -344,7 +345,7 @@ void MainWindow::onDevicesUpdated(const QList<DeviceInfo>& devices)
         item->setForeground(Qt::gray);
     }
 
-    if (hasUsb && m_deviceDiscovery->isScanning()) {
+    if (hasUsb && m_deviceDiscovery->isScanning() && !m_manualScanInProgress) {
         m_deviceDiscovery->stopScan();
         m_scanBtn->setText("扫描无线设备");
         m_scanProgress->setVisible(false);
@@ -366,6 +367,7 @@ void MainWindow::onScanDevices()
 {
     if (m_deviceDiscovery->isScanning() || m_scanProgress->isVisible()) {
         m_deviceDiscovery->stopScan();
+        m_manualScanInProgress = false;
         m_autoScanPausedByUser = true;
         m_scanBtn->setText("扫描无线设备");
         m_scanProgress->setVisible(false);
@@ -374,6 +376,7 @@ void MainWindow::onScanDevices()
     }
 
     m_autoScanPausedByUser = false;
+    m_manualScanInProgress = true;
     m_scanBtn->setText("停止扫描");
     m_scanProgress->setVisible(true);
     m_scanProgress->setValue(0);
@@ -391,6 +394,7 @@ void MainWindow::onScanFinished(const QList<DiscoveredDevice>& devices)
 {
     m_scanBtn->setText("扫描无线设备");
     m_scanProgress->setVisible(false);
+    m_manualScanInProgress = false;
 
     if (devices.isEmpty()) {
         m_statusLabel->setText("当前网段未找到无线设备");
@@ -442,6 +446,7 @@ void MainWindow::connectToDevice(const QString& serial)
     }
     m_scanProgress->setVisible(false);
     m_scanBtn->setText("扫描无线设备");
+    m_manualScanInProgress = false;
     m_autoScanPausedByUser = true;
 
     m_currentSerial = serial;
@@ -603,7 +608,10 @@ void MainWindow::onServerReady(int videoPort, int audioPort, int controlPort)
 
     if (m_volumeController) {
         QSettings settings("QtScrcpy", "QtScrcpy");
-        const bool muteOnConnect = settings.value("control/muteOnConnect", false).toBool();
+        if (!settings.contains("control/muteOnConnect")) {
+            settings.setValue("control/muteOnConnect", true);
+        }
+        const bool muteOnConnect = settings.value("control/muteOnConnect", true).toBool();
         if (muteOnConnect) {
             m_volumeController->saveAndMute();
         }

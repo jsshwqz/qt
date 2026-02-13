@@ -270,6 +270,12 @@ AdbProcess::AdbResult AdbProcess::execute(const QStringList& args, int timeoutMs
 
 void AdbProcess::executeAsync(const QStringList& args)
 {
+    if (m_process->state() != QProcess::NotRunning) {
+        // Avoid re-entrant start() calls on the shared async process instance.
+        qWarning() << "ADB async command skipped because process is busy:" << args;
+        return;
+    }
+
     m_stdOutput.clear();
     m_stdError.clear();
     m_process->start(m_adbPath, args);
