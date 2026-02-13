@@ -14,6 +14,7 @@
 #include <QTimer>
 #include <QMutex>
 #include <QVariant>
+#include <QElapsedTimer>
 
 class QInputMethodEvent;
 
@@ -145,6 +146,8 @@ private:
     // 渲染优化
     bool m_needsUpdate;
     bool m_imeComposing;
+    int m_targetFrameIntervalMs;
+    QElapsedTimer m_presentTimer;
 };
 
 #endif // VIDEOWIDGET_H

@@ -503,6 +503,19 @@ void MainWindow::disconnectFromDevice()
 
 void MainWindow::showDeviceList()
 {
+    if (m_videoWidget && m_videoWidget->isFullScreen()) {
+        m_videoWidget->setFullScreen(false);
+    }
+    if (menuBar()) {
+        menuBar()->setVisible(true);
+    }
+    if (statusBar()) {
+        statusBar()->setVisible(true);
+    }
+    if (m_toolbar) {
+        m_toolbar->setVisible(true);
+    }
+
     m_stackedWidget->setCurrentWidget(m_deviceListPage);
     setWindowTitle("QtScrcpy - 安卓投屏");
     resize(400, 700);
@@ -735,7 +748,22 @@ void MainWindow::onExpandSettingsClicked()
 
 void MainWindow::onFullscreenClicked()
 {
-    m_videoWidget->setFullScreen(!m_videoWidget->isFullScreen());
+    const bool enterFullScreen = !m_videoWidget->isFullScreen();
+    m_videoWidget->setFullScreen(enterFullScreen);
+
+    if (menuBar()) {
+        menuBar()->setVisible(!enterFullScreen);
+    }
+    if (statusBar()) {
+        statusBar()->setVisible(!enterFullScreen);
+    }
+    if (m_toolbar) {
+        m_toolbar->setVisible(!enterFullScreen);
+    }
+
+    if (!m_videoWidget->videoSize().isEmpty()) {
+        m_videoWidget->resizeToFit();
+    }
 }
 
 void MainWindow::onScreenshotClicked()

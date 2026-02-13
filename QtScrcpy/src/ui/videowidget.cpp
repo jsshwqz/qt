@@ -33,6 +33,7 @@ VideoWidget::VideoWidget(QWidget *parent)
     , m_fps(0.0)
     , m_needsUpdate(false)
     , m_imeComposing(false)
+    , m_targetFrameIntervalMs(16)
 {
     // 设置焦点策略
     setFocusPolicy(Qt::StrongFocus);
@@ -56,6 +57,7 @@ VideoWidget::VideoWidget(QWidget *parent)
     
     // 设置最小尺寸
     setMinimumSize(320, 240);
+    m_presentTimer.start();
 }
 
 VideoWidget::~VideoWidget()
@@ -75,7 +77,27 @@ void VideoWidget::updateFrame(const QImage& frame)
     }
     
     m_frameCount++;
-    update();
+
+    const qint64 elapsed = m_presentTimer.isValid() ? m_presentTimer.elapsed() : m_targetFrameIntervalMs;
+    if (elapsed >= m_targetFrameIntervalMs) {
+        m_needsUpdate = false;
+        m_presentTimer.restart();
+        update();
+        return;
+    }
+
+    if (!m_needsUpdate) {
+        m_needsUpdate = true;
+        const int delay = qMax(1, m_targetFrameIntervalMs - static_cast<int>(elapsed));
+        QTimer::singleShot(delay, this, [this]() {
+            if (!m_needsUpdate) {
+                return;
+            }
+            m_needsUpdate = false;
+            m_presentTimer.restart();
+            update();
+        });
+    }
 }
 
 void VideoWidget::setFullScreen(bool fullscreen)
@@ -102,6 +124,9 @@ void VideoWidget::setFullScreen(bool fullscreen)
     }
 
     updateRenderRect();
+    if (m_inputHandler) {
+        m_inputHandler->setVideoDisplaySize(m_renderRect.size());
+    }
     update();
     setFocus(Qt::OtherFocusReason);
 }
@@ -335,13 +360,13 @@ void VideoWidget::keyPressEvent(QKeyEvent* event)
 {
     // F11切换全屏
     if (event->key() == Qt::Key_F11) {
-        setFullScreen(!m_isFullScreen);
+        emit doubleClicked();
         return;
     }
     
     // ESC退出全屏
     if (event->key() == Qt::Key_Escape && m_isFullScreen) {
-        setFullScreen(false);
+        emit doubleClicked();
         return;
     }
 
