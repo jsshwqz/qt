@@ -115,6 +115,7 @@ private:
     bool parseIpEndpoint(const QString& input, QString* ip, int* port) const;
     bool prepareWirelessFromUsb(int port = 5555);
     QString resolveDeviceWifiIp(AdbProcess& adb, const QString& serial) const;
+    void rememberNetworkSegment(const QString& ipAddress);
     
     // UI组件
     QStackedWidget* m_stackedWidget;

@@ -73,6 +73,10 @@ void VideoWidget::updateFrame(const QImage& frame)
         if (m_videoSize != frame.size()) {
             m_videoSize = frame.size();
             updateRenderRect();
+            if (m_isFullScreen) {
+                // Keep fullscreen mapping in sync when device orientation changes.
+                update();
+            }
         }
     }
     
@@ -124,9 +128,6 @@ void VideoWidget::setFullScreen(bool fullscreen)
     }
 
     updateRenderRect();
-    if (m_inputHandler) {
-        m_inputHandler->setVideoDisplaySize(m_renderRect.size());
-    }
     update();
     setFocus(Qt::OtherFocusReason);
 }
@@ -136,7 +137,7 @@ void VideoWidget::setInputHandler(InputHandler* handler)
     m_inputHandler = handler;
     
     if (m_inputHandler) {
-        m_inputHandler->setVideoDisplaySize(m_renderRect.size());
+        updateRenderRect();
     }
 }
 
@@ -149,6 +150,13 @@ void VideoWidget::setDropEnabled(bool enabled)
 void VideoWidget::resizeToFit()
 {
     if (m_videoSize.isEmpty()) {
+        return;
+    }
+
+    if (m_isFullScreen) {
+        // In fullscreen mode, only recompute render rect; do not resize the window.
+        updateRenderRect();
+        update();
         return;
     }
     
@@ -221,16 +229,15 @@ void VideoWidget::resizeEvent(QResizeEvent* event)
 {
     QWidget::resizeEvent(event);
     updateRenderRect();
-    
-    if (m_inputHandler) {
-        m_inputHandler->setVideoDisplaySize(m_renderRect.size());
-    }
 }
 
 void VideoWidget::updateRenderRect()
 {
     if (m_videoSize.isEmpty()) {
         m_renderRect = rect();
+        if (m_inputHandler) {
+            m_inputHandler->setVideoDisplaySize(m_renderRect.size());
+        }
         return;
     }
     
@@ -244,6 +251,10 @@ void VideoWidget::updateRenderRect()
         m_renderRect = QRect(QPoint(x, y), scaled);
     } else {
         m_renderRect = rect();
+    }
+
+    if (m_inputHandler) {
+        m_inputHandler->setVideoDisplaySize(m_renderRect.size());
     }
 }
 

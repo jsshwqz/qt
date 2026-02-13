@@ -83,7 +83,7 @@ QStringList DeviceDiscovery::loadSavedSegments() const
         if (!filtered.contains(trimmed)) {
             filtered.append(trimmed);
         }
-        if (filtered.size() >= 2) {
+        if (filtered.size() >= 4) {
             break;
         }
     }
@@ -101,7 +101,7 @@ void DeviceDiscovery::saveSegments(const QStringList& segments) const
         if (!filtered.contains(trimmed)) {
             filtered.append(trimmed);
         }
-        if (filtered.size() >= 2) {
+        if (filtered.size() >= 4) {
             break;
         }
     }
@@ -157,7 +157,7 @@ bool DeviceDiscovery::isIgnoredInterface(const QNetworkInterface& iface) const
 
 QStringList DeviceDiscovery::getLocalNetworkSegments() const
 {
-    auto collectSegments = [this](bool wifiOnly, bool requireRunning, bool preferFirst) {
+    auto collectSegments = [this](bool wifiOnly, bool requireRunning, int maxCount) {
         QStringList segments;
         const QList<QNetworkInterface> interfaces = QNetworkInterface::allInterfaces();
 
@@ -181,7 +181,6 @@ QStringList DeviceDiscovery::getLocalNetworkSegments() const
             }
 
             const QList<QNetworkAddressEntry> entries = iface.addressEntries();
-            bool addedFromCurrentInterface = false;
             for (const QNetworkAddressEntry& entry : entries) {
                 const QHostAddress ip = entry.ip();
                 if (ip.protocol() != QAbstractSocket::IPv4Protocol) {
@@ -203,45 +202,51 @@ QStringList DeviceDiscovery::getLocalNetworkSegments() const
                     .arg(parts[0]).arg(parts[1]).arg(parts[2]);
                 if (isValidSegment(segment) && !segments.contains(segment)) {
                     segments.append(segment);
-                    addedFromCurrentInterface = true;
+                    if (segments.size() >= maxCount) {
+                        return segments;
+                    }
                 }
-            }
-
-            // Prefer the first eligible interface to avoid large scans across
-            // unrelated virtual or disconnected adapters.
-            if (preferFirst && addedFromCurrentInterface && !segments.isEmpty()) {
-                return QStringList{segments.first()};
             }
         }
         return segments;
     };
 
-    // 1) Current connected Wi-Fi subnet (fast path).
-    const QStringList activeWifiSegments = collectSegments(true, true, true);
-    if (!activeWifiSegments.isEmpty()) {
-        return activeWifiSegments;
-    }
+    auto appendUnique = [](QStringList& out, const QStringList& in, int maxCount) {
+        for (const QString& segment : in) {
+            if (segment.isEmpty()) {
+                continue;
+            }
+            if (!out.contains(segment)) {
+                out.append(segment);
+                if (out.size() >= maxCount) {
+                    return;
+                }
+            }
+        }
+    };
 
-    // 2) Last successful scan subnet from local settings.
+    constexpr int kMaxScanSegments = 4;
+    QStringList finalSegments;
+
+    // 1) Current connected Wi-Fi subnets (multi-NIC friendly).
+    appendUnique(finalSegments, collectSegments(true, true, kMaxScanSegments), kMaxScanSegments);
+
+    // 2) Last successful scan subnets from local settings.
     const QStringList savedSegments = loadSavedSegments();
-    if (!savedSegments.isEmpty()) {
-        return savedSegments;
-    }
+    appendUnique(finalSegments, savedSegments, kMaxScanSegments);
 
     // 3) Wireless adapter configured subnet fallback.
-    const QStringList configuredWifiSegments = collectSegments(true, false, true);
-    if (!configuredWifiSegments.isEmpty()) {
-        return configuredWifiSegments;
-    }
+    appendUnique(finalSegments, collectSegments(true, false, kMaxScanSegments), kMaxScanSegments);
 
     // 4) Any active subnet fallback.
-    const QStringList activeAnySegments = collectSegments(false, true, true);
-    if (!activeAnySegments.isEmpty()) {
-        return activeAnySegments;
+    appendUnique(finalSegments, collectSegments(false, true, kMaxScanSegments), kMaxScanSegments);
+
+    if (!finalSegments.isEmpty()) {
+        return finalSegments;
     }
 
     // 5) Last-resort configured subnet.
-    return collectSegments(false, false, true);
+    return collectSegments(false, false, kMaxScanSegments);
 }
 
 void DeviceDiscovery::startScan(int portToScan, int timeout)

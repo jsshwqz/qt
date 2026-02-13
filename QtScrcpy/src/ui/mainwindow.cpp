@@ -515,6 +515,7 @@ void MainWindow::onConnectDevice()
 
     m_statusLabel->setText(QString("Connecting %1:%2 ...").arg(ip).arg(port));
     if (m_deviceManager->connectWirelessDevice(ip, port)) {
+        rememberNetworkSegment(ip);
         m_statusLabel->setText("Connected");
         m_ipInput->clear();
     } else {
@@ -1106,6 +1107,7 @@ bool MainWindow::prepareWirelessFromUsb(int port)
 
     for (int attempt = 0; attempt < 5; ++attempt) {
         if (m_deviceManager->connectWirelessDevice(wifiIp, port)) {
+            rememberNetworkSegment(wifiIp);
             return true;
         }
         QThread::msleep(300);
@@ -1113,4 +1115,39 @@ bool MainWindow::prepareWirelessFromUsb(int port)
 
     qWarning() << "Failed to connect wireless device after tcpip enable:" << wifiIp << port;
     return false;
+}
+
+void MainWindow::rememberNetworkSegment(const QString& ipAddress)
+{
+    QString parsedIp;
+    int parsedPort = 5555;
+    if (!parseIpEndpoint(ipAddress, &parsedIp, &parsedPort)) {
+        return;
+    }
+
+    const QStringList parts = parsedIp.split('.');
+    if (parts.size() != 4) {
+        return;
+    }
+
+    const QString segment = QString("%1.%2.%3")
+                                .arg(parts[0])
+                                .arg(parts[1])
+                                .arg(parts[2]);
+    static const QRegularExpression segmentRegex(
+        "^((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)\\.){2}(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)$");
+    if (!segmentRegex.match(segment).hasMatch()) {
+        return;
+    }
+
+    QSettings settings("QtScrcpy", "QtScrcpy");
+    QStringList segments = settings.value("network/lastScanSegments").toStringList();
+    segments.removeAll(segment);
+    segments.prepend(segment);
+    while (segments.size() > 4) {
+        segments.removeLast();
+    }
+
+    settings.setValue("network/lastScanSegments", segments);
+    settings.setValue("network/lastScanSegment", segment);
 }
