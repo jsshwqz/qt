@@ -29,8 +29,11 @@ class ClipboardManager;
 class FileTransfer;
 class Shortcuts;
 class VolumeController;
+class AdbProcess;
 class QPushButton;
 class QLineEdit;
+class QDragEnterEvent;
+class QDropEvent;
 
 /**
  * @brief 主窗口
@@ -45,6 +48,8 @@ public:
 
 protected:
     void closeEvent(QCloseEvent* event) override;
+    void dragEnterEvent(QDragEnterEvent* event) override;
+    void dropEvent(QDropEvent* event) override;
 
 private slots:
     // 设备管理
@@ -92,6 +97,8 @@ private slots:
     void onVideoDoubleClicked();
     void onShortcutTriggered(const QString& action);
     void onUnicodeTextInputRequested(const QString& text);
+    void onPasteClipboardToDevice();
+    void onSyncClipboardFromDevice();
 
 private:
     void setupUi();
@@ -105,6 +112,9 @@ private:
     void showVideoView();
     void triggerAutoWirelessScan(bool force = false);
     void updateStatusBar();
+    bool parseIpEndpoint(const QString& input, QString* ip, int* port) const;
+    bool prepareWirelessFromUsb(int port = 5555);
+    QString resolveDeviceWifiIp(AdbProcess& adb, const QString& serial) const;
     
     // UI组件
     QStackedWidget* m_stackedWidget;

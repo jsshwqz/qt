@@ -8,6 +8,7 @@
 #include "mainwindow.h"
 #include "videowidget.h"
 #include "toolbarwidget.h"
+#include "adb/adbprocess.h"
 #include "adb/devicediscovery.h"
 #include "adb/shortcuts.h"
 #include "adb/volumecontroller.h"
@@ -30,6 +31,16 @@
 #include <QKeySequence>
 #include <QDebug>
 #include <QSettings>
+#include <QApplication>
+#include <QClipboard>
+#include <QDragEnterEvent>
+#include <QDropEvent>
+#include <QMimeData>
+#include <QUrl>
+#include <QFileInfo>
+#include <QRegularExpression>
+#include <QHostAddress>
+#include <QThread>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -83,6 +94,7 @@ void MainWindow::setupUi()
     resize(400, 700);
 
     setCentralWidget(m_stackedWidget);
+    setAcceptDrops(true);
 
     m_deviceListPage = new QWidget(this);
     QVBoxLayout* deviceLayout = new QVBoxLayout(m_deviceListPage);
@@ -210,6 +222,9 @@ void MainWindow::setupMenuBar()
     controlMenu->addSeparator();
     controlMenu->addAction("通知栏", this, &MainWindow::onExpandNotificationsClicked, QKeySequence("Ctrl+N"));
     controlMenu->addAction("快捷设置", this, &MainWindow::onExpandSettingsClicked, QKeySequence("Ctrl+Shift+N"));
+    controlMenu->addSeparator();
+    controlMenu->addAction("Paste Clipboard to Device", this, &MainWindow::onPasteClipboardToDevice, QKeySequence("Ctrl+Shift+V"));
+    controlMenu->addAction("Sync Clipboard from Device", this, &MainWindow::onSyncClipboardFromDevice, QKeySequence("Ctrl+Shift+C"));
 
     QMenu* viewMenu = menuBar->addMenu("视图(&V)");
     viewMenu->addAction("全屏", this, &MainWindow::onFullscreenClicked, QKeySequence::FullScreen);
@@ -320,6 +335,69 @@ void MainWindow::closeEvent(QCloseEvent* event)
     event->accept();
 }
 
+void MainWindow::dragEnterEvent(QDragEnterEvent* event)
+{
+    if (!event || !m_isConnected || !m_fileTransfer) {
+        if (event) {
+            event->ignore();
+        }
+        return;
+    }
+
+    const QMimeData* mimeData = event->mimeData();
+    if (!mimeData || !mimeData->hasUrls()) {
+        event->ignore();
+        return;
+    }
+
+    for (const QUrl& url : mimeData->urls()) {
+        if (!url.isLocalFile()) {
+            continue;
+        }
+        const QFileInfo info(url.toLocalFile());
+        if (info.exists()) {
+            event->acceptProposedAction();
+            return;
+        }
+    }
+    event->ignore();
+}
+
+void MainWindow::dropEvent(QDropEvent* event)
+{
+    if (!event || !m_isConnected || !m_fileTransfer) {
+        if (event) {
+            event->ignore();
+        }
+        return;
+    }
+
+    const QMimeData* mimeData = event->mimeData();
+    if (!mimeData || !mimeData->hasUrls()) {
+        event->ignore();
+        return;
+    }
+
+    QStringList paths;
+    for (const QUrl& url : mimeData->urls()) {
+        if (!url.isLocalFile()) {
+            continue;
+        }
+        const QString localPath = url.toLocalFile();
+        if (!localPath.isEmpty() && QFileInfo::exists(localPath)) {
+            paths.append(localPath);
+        }
+    }
+
+    if (paths.isEmpty()) {
+        event->ignore();
+        return;
+    }
+
+    onFilesDropped(paths);
+    event->acceptProposedAction();
+}
+
 void MainWindow::onDevicesUpdated(const QList<DeviceInfo>& devices)
 {
     m_deviceList->clear();
@@ -379,6 +457,15 @@ void MainWindow::onScanDevices()
 
     m_autoScanPausedByUser = false;
     m_manualScanInProgress = true;
+
+    if (prepareWirelessFromUsb()) {
+        m_manualScanInProgress = false;
+        m_scanBtn->setText("Scan Wireless");
+        m_scanProgress->setVisible(false);
+        m_statusLabel->setText("USB-assisted Wi-Fi connection established.");
+        m_deviceManager->refreshDevices();
+        return;
+    }
     m_scanBtn->setText("停止扫描");
     m_scanProgress->setVisible(true);
     m_scanProgress->setValue(0);
@@ -412,22 +499,32 @@ void MainWindow::onScanFinished(const QList<DiscoveredDevice>& devices)
 
 void MainWindow::onConnectDevice()
 {
-    const QString ip = m_ipInput->text().trimmed();
-    if (ip.isEmpty()) {
-        QMessageBox::warning(this, "输入错误", "请输入手机 IP 地址。");
+    const QString endpoint = m_ipInput->text().trimmed();
+    if (endpoint.isEmpty()) {
+        QMessageBox::warning(this, "Input error", "Please input device IP or IP:port.");
         return;
     }
 
-    m_statusLabel->setText("正在连接 " + ip + " ...");
-    if (m_deviceManager->connectWirelessDevice(ip)) {
-        m_statusLabel->setText("连接成功");
+    QString ip;
+    int port = 5555;
+    if (!parseIpEndpoint(endpoint, &ip, &port)) {
+        QMessageBox::warning(this, "Invalid endpoint",
+                             "Please input an IPv4 address or IPv4:port, e.g. 192.168.2.159 or 192.168.2.159:5555");
+        return;
+    }
+
+    m_statusLabel->setText(QString("Connecting %1:%2 ...").arg(ip).arg(port));
+    if (m_deviceManager->connectWirelessDevice(ip, port)) {
+        m_statusLabel->setText("Connected");
         m_ipInput->clear();
     } else {
-        m_statusLabel->setText("连接失败");
+        m_statusLabel->setText("Connect failed");
         QMessageBox::warning(
             this,
-            "连接失败",
-            "无法连接到 " + ip + "\n\n请确认已开启无线调试。");
+            "Connect failed",
+            QString("Failed to connect to %1:%2\n\nPlease ensure wireless debugging is enabled.")
+                .arg(ip)
+                .arg(port));
     }
 }
 
@@ -619,7 +716,14 @@ void MainWindow::onServerReady(int videoPort, int audioPort, int controlPort)
     m_videoWidget->setInputHandler(m_inputHandler);
 
     m_clipboardManager->setControlStream(m_controlStream);
-    m_clipboardManager->startSync();
+    const bool autoClipboard = QSettings("QtScrcpy", "QtScrcpy")
+                                   .value("control/clipboardSync", true)
+                                   .toBool();
+    if (autoClipboard) {
+        m_clipboardManager->startSync();
+    } else {
+        m_clipboardManager->stopSync();
+    }
 
     if (m_volumeController) {
         QSettings settings("QtScrcpy", "QtScrcpy");
@@ -838,4 +942,175 @@ void MainWindow::onTransferCompleted(const QString& fileName, bool success, cons
     } else {
         QMessageBox::warning(this, "传输失败", QString("%1: %2").arg(fileName).arg(message));
     }
+}
+
+void MainWindow::onPasteClipboardToDevice()
+{
+    if (!m_isConnected || !m_clipboardManager) {
+        m_statusLabel->setText("Not connected.");
+        return;
+    }
+
+    const QString text = QApplication::clipboard()->text();
+    if (text.isEmpty()) {
+        m_statusLabel->setText("Local clipboard is empty.");
+        return;
+    }
+
+    m_clipboardManager->sendToDevice(text);
+    m_statusLabel->setText("Clipboard sent to device.");
+}
+
+void MainWindow::onSyncClipboardFromDevice()
+{
+    if (!m_isConnected || !m_clipboardManager) {
+        m_statusLabel->setText("Not connected.");
+        return;
+    }
+
+    m_clipboardManager->getFromDevice();
+    m_statusLabel->setText("Requested device clipboard.");
+}
+
+bool MainWindow::parseIpEndpoint(const QString& input, QString* ip, int* port) const
+{
+    const QString trimmed = input.trimmed();
+    if (trimmed.isEmpty()) {
+        return false;
+    }
+
+    static const QRegularExpression endpointRegex(
+        "^\\s*(\\d{1,3}(?:\\.\\d{1,3}){3})(?::(\\d{1,5}))?\\s*$");
+    const QRegularExpressionMatch match = endpointRegex.match(trimmed);
+    if (!match.hasMatch()) {
+        return false;
+    }
+
+    const QString parsedIp = match.captured(1);
+    QHostAddress host;
+    if (!host.setAddress(parsedIp) || host.protocol() != QAbstractSocket::IPv4Protocol) {
+        return false;
+    }
+
+    int parsedPort = 5555;
+    const QString portText = match.captured(2);
+    if (!portText.isEmpty()) {
+        bool ok = false;
+        parsedPort = portText.toInt(&ok);
+        if (!ok || parsedPort <= 0 || parsedPort > 65535) {
+            return false;
+        }
+    }
+
+    if (ip) {
+        *ip = host.toString();
+    }
+    if (port) {
+        *port = parsedPort;
+    }
+    return true;
+}
+
+QString MainWindow::resolveDeviceWifiIp(AdbProcess& adb, const QString& serial) const
+{
+    auto extractFirstIpv4 = [](const QString& text) -> QString {
+        static const QRegularExpression ipRegex(
+            "\\b((?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(?:\\.(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3})\\b");
+        QRegularExpressionMatchIterator it = ipRegex.globalMatch(text);
+        while (it.hasNext()) {
+            const QRegularExpressionMatch m = it.next();
+            const QString candidate = m.captured(1);
+            QHostAddress addr;
+            if (!addr.setAddress(candidate) || addr.protocol() != QAbstractSocket::IPv4Protocol) {
+                continue;
+            }
+            if (candidate.startsWith("127.") || candidate == "0.0.0.0") {
+                continue;
+            }
+            return candidate;
+        }
+        return QString();
+    };
+
+    const QStringList shellCommands = {
+        "ip -f inet addr show wlan0",
+        "ip -f inet addr show",
+        "ifconfig wlan0",
+        "ip route"
+    };
+    for (const QString& cmd : shellCommands) {
+        const auto result = adb.executeForDevice(serial, {"shell", cmd}, 6000);
+        if (!result.success) {
+            continue;
+        }
+        const QString candidate = extractFirstIpv4(result.output + "\n" + result.error);
+        if (!candidate.isEmpty()) {
+            return candidate;
+        }
+    }
+
+    const QStringList propKeys = {
+        "dhcp.wlan0.ipaddress",
+        "dhcp.wlan.ipaddress"
+    };
+    for (const QString& key : propKeys) {
+        const QString value = adb.getDeviceProperty(serial, key).trimmed();
+        if (value.isEmpty()) {
+            continue;
+        }
+        const QString candidate = extractFirstIpv4(value);
+        if (!candidate.isEmpty()) {
+            return candidate;
+        }
+    }
+
+    return QString();
+}
+
+bool MainWindow::prepareWirelessFromUsb(int port)
+{
+    if (!m_deviceManager) {
+        return false;
+    }
+
+    QString usbSerial;
+    const QList<DeviceInfo> devices = m_deviceManager->getDevices();
+    for (const DeviceInfo& info : devices) {
+        if (!info.isWireless && !info.serial.isEmpty()) {
+            usbSerial = info.serial;
+            break;
+        }
+    }
+    if (usbSerial.isEmpty()) {
+        return false;
+    }
+
+    AdbProcess* adb = m_deviceManager->adb();
+    if (!adb) {
+        return false;
+    }
+
+    adb->execute({"start-server"}, 5000);
+
+    const auto tcpipResult = adb->executeForDevice(usbSerial, {"tcpip", QString::number(port)}, 10000);
+    if (!tcpipResult.success) {
+        qWarning() << "Failed to enable tcpip mode:" << tcpipResult.error << tcpipResult.output;
+        return false;
+    }
+
+    const QString wifiIp = resolveDeviceWifiIp(*adb, usbSerial);
+    if (wifiIp.isEmpty()) {
+        qWarning() << "Failed to resolve device Wi-Fi IP from USB device:" << usbSerial;
+        return false;
+    }
+
+    for (int attempt = 0; attempt < 5; ++attempt) {
+        if (m_deviceManager->connectWirelessDevice(wifiIp, port)) {
+            return true;
+        }
+        QThread::msleep(300);
+    }
+
+    qWarning() << "Failed to connect wireless device after tcpip enable:" << wifiIp << port;
+    return false;
 }
