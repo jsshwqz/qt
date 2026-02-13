@@ -211,42 +211,34 @@ QStringList DeviceDiscovery::getLocalNetworkSegments() const
         return segments;
     };
 
-    auto appendUnique = [](QStringList& out, const QStringList& in, int maxCount) {
-        for (const QString& segment : in) {
-            if (segment.isEmpty()) {
-                continue;
-            }
-            if (!out.contains(segment)) {
-                out.append(segment);
-                if (out.size() >= maxCount) {
-                    return;
-                }
-            }
-        }
-    };
+    constexpr int kSingleTargetSegment = 1;
 
-    constexpr int kMaxScanSegments = 4;
-    QStringList finalSegments;
+    // 1) Prefer the currently connected Wi-Fi subnet.
+    const QStringList connectedWifi = collectSegments(true, true, kSingleTargetSegment);
+    if (!connectedWifi.isEmpty()) {
+        return connectedWifi;
+    }
 
-    // 1) Current connected Wi-Fi subnets (multi-NIC friendly).
-    appendUnique(finalSegments, collectSegments(true, true, kMaxScanSegments), kMaxScanSegments);
-
-    // 2) Last successful scan subnets from local settings.
+    // 2) If no connected Wi-Fi, reuse the most recent successful subnet.
     const QStringList savedSegments = loadSavedSegments();
-    appendUnique(finalSegments, savedSegments, kMaxScanSegments);
+    if (!savedSegments.isEmpty()) {
+        return { savedSegments.first() };
+    }
 
-    // 3) Wireless adapter configured subnet fallback.
-    appendUnique(finalSegments, collectSegments(true, false, kMaxScanSegments), kMaxScanSegments);
+    // 3) Fallback to configured Wi-Fi subnet.
+    const QStringList configuredWifi = collectSegments(true, false, kSingleTargetSegment);
+    if (!configuredWifi.isEmpty()) {
+        return configuredWifi;
+    }
 
-    // 4) Any active subnet fallback.
-    appendUnique(finalSegments, collectSegments(false, true, kMaxScanSegments), kMaxScanSegments);
-
-    if (!finalSegments.isEmpty()) {
-        return finalSegments;
+    // 4) Fallback to any active subnet.
+    const QStringList activeSegments = collectSegments(false, true, kSingleTargetSegment);
+    if (!activeSegments.isEmpty()) {
+        return activeSegments;
     }
 
     // 5) Last-resort configured subnet.
-    return collectSegments(false, false, kMaxScanSegments);
+    return collectSegments(false, false, kSingleTargetSegment);
 }
 
 void DeviceDiscovery::startScan(int portToScan, int timeout)
