@@ -43,8 +43,10 @@
 #include <QThread>
 
 namespace {
-constexpr int kScanNoProgressTimeoutMs = 2 * 60 * 1000;
-constexpr int kConnectNoProgressTimeoutMs = 2 * 60 * 1000;
+constexpr int kDefaultScanNoProgressTimeoutSec = 120;
+constexpr int kDefaultConnectNoProgressTimeoutSec = 120;
+constexpr int kMinNoProgressTimeoutSec = 30;
+constexpr int kMaxNoProgressTimeoutSec = 600;
 }
 
 MainWindow::MainWindow(QWidget *parent)
@@ -71,11 +73,26 @@ MainWindow::MainWindow(QWidget *parent)
     , m_pendingOperationTimeoutMs(0)
     , m_lastScanProgressValue(0)
     , m_operationTimeoutHandling(false)
+    , m_scanNoProgressTimeoutMs(kDefaultScanNoProgressTimeoutSec * 1000)
+    , m_connectNoProgressTimeoutMs(kDefaultConnectNoProgressTimeoutSec * 1000)
 {
     setupUi();
     setupMenuBar();
     setupStatusBar();
     setupConnections();
+
+    m_scanNoProgressTimeoutMs = loadTimeoutSettingMs(
+        "runtime/scanNoProgressTimeoutSec",
+        kDefaultScanNoProgressTimeoutSec,
+        kMinNoProgressTimeoutSec,
+        kMaxNoProgressTimeoutSec);
+    m_connectNoProgressTimeoutMs = loadTimeoutSettingMs(
+        "runtime/connectNoProgressTimeoutSec",
+        kDefaultConnectNoProgressTimeoutSec,
+        kMinNoProgressTimeoutSec,
+        kMaxNoProgressTimeoutSec);
+    m_scanBtn->setToolTip(QString("Auto-stop scan if no progress for %1 seconds")
+                              .arg(m_scanNoProgressTimeoutMs / 1000));
 
     m_autoScanTimer->setInterval(30000);
     connect(m_autoScanTimer, &QTimer::timeout, this, [this]() {
@@ -487,7 +504,7 @@ void MainWindow::onScanDevices()
     m_scanProgress->setValue(0);
     m_lastScanProgressValue = 0;
     m_statusLabel->setText("正在扫描当前网段中的无线 ADB 设备...");
-    startPendingOperation(PendingOperation::Scanning, kScanNoProgressTimeoutMs);
+    startPendingOperation(PendingOperation::Scanning, m_scanNoProgressTimeoutMs);
     m_deviceDiscovery->startScan();
 }
 
@@ -588,7 +605,7 @@ void MainWindow::connectToDevice(const QString& serial)
             this, &MainWindow::onTransferCompleted);
 
     m_serverManager->setSerial(serial);
-    startPendingOperation(PendingOperation::Connecting, kConnectNoProgressTimeoutMs);
+    startPendingOperation(PendingOperation::Connecting, m_connectNoProgressTimeoutMs);
     m_serverManager->start();
 }
 
@@ -681,6 +698,22 @@ void MainWindow::stopPendingOperation(PendingOperation operation)
     m_pendingOperationProgressClock.invalidate();
 }
 
+int MainWindow::loadTimeoutSettingMs(const QString& key,
+                                     int defaultSeconds,
+                                     int minSeconds,
+                                     int maxSeconds) const
+{
+    QSettings settings("QtScrcpy", "QtScrcpy");
+    bool ok = false;
+    int seconds = settings.value(key, defaultSeconds).toInt(&ok);
+    if (!ok) {
+        seconds = defaultSeconds;
+    }
+    seconds = qBound(minSeconds, seconds, maxSeconds);
+    settings.setValue(key, seconds);
+    return seconds * 1000;
+}
+
 void MainWindow::onOperationWatchdogTick()
 {
     if (m_operationTimeoutHandling || m_pendingOperation == PendingOperation::None) {
@@ -755,7 +788,7 @@ void MainWindow::triggerAutoWirelessScan(bool force)
     m_scanProgress->setValue(0);
     m_lastScanProgressValue = 0;
     m_statusLabel->setText("自动扫描 Wi-Fi 网段中...");
-    startPendingOperation(PendingOperation::Scanning, kScanNoProgressTimeoutMs);
+    startPendingOperation(PendingOperation::Scanning, m_scanNoProgressTimeoutMs);
     m_deviceDiscovery->startScan();
 }
 

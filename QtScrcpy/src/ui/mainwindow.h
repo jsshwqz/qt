@@ -127,6 +127,10 @@ private:
     void markPendingOperationProgress();
     void stopPendingOperation(PendingOperation operation = PendingOperation::None);
     void onOperationWatchdogTick();
+    int loadTimeoutSettingMs(const QString& key,
+                             int defaultSeconds,
+                             int minSeconds,
+                             int maxSeconds) const;
     
     // UI组件
     QStackedWidget* m_stackedWidget;
@@ -175,6 +179,8 @@ private:
     QElapsedTimer m_pendingOperationProgressClock;
     int m_lastScanProgressValue;
     bool m_operationTimeoutHandling;
+    int m_scanNoProgressTimeoutMs;
+    int m_connectNoProgressTimeoutMs;
 };
 
 #endif // MAINWINDOW_H
