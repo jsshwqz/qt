@@ -58,3 +58,46 @@
   - Fullscreen smooth-transform tradeoff favors FPS over scaling quality.
 - Rollback plan:
   - Revert this commit to restore previous always-audio-arg behavior and pre-change UI input/resize logic.
+
+## 6) Follow-up (2026-02-13)
+- Scope: direct-input behavior (no clipboard fallback), USB scan lifecycle stabilization, ADB command overlap guard.
+
+### 6.1 Problem / Symptom
+- User requested direct input only (no clipboard-paste path).
+- Runtime logs showed `Could not inject char u+XXXX` on Chinese commit text.
+- USB connected sessions could still keep wireless scan UI active, and stop was not always immediate.
+- Logs occasionally showed `QProcess::start: Process is already running` in ADB polling.
+
+### 6.2 Root Cause
+- IME-committed non-ASCII text was sent as `InjectText`; on some devices (e.g. Android 10) server-side char injection fails.
+- `VideoWidget` previously suppressed key events when IME was visible/composing, so device-side IME could not receive direct key flow.
+- Auto-scan trigger logic only checked wireless devices, not USB presence; connect flow did not force-suspend scan lifecycle.
+- `AdbProcess` reused a shared `QProcess` without guarding against overlapping sync calls.
+
+### 6.3 Changes Made
+- `QtScrcpy/src/input/inputhandler.cpp`
+  - Removed clipboard fallback from text path (direct-input mode only).
+  - For `Qt::Key_unknown` committed text, skip non-ASCII and avoid server-side inject-char failures.
+  - `handleTextInput()` now ignores non-ASCII committed text and sends direct text only for ASCII.
+- `QtScrcpy/src/ui/videowidget.cpp`
+  - Do not swallow key press/release during IME visibility/composition.
+  - `inputMethodEvent()` forwards committed text only when ASCII; keeps non-ASCII on device-side IME key flow.
+- `QtScrcpy/src/ui/mainwindow.cpp`
+  - Stop wireless scan immediately when USB device is present.
+  - `onScanDevices()` stop branch now also reacts to visible progress state.
+  - `connectToDevice()` now forcibly stops scan, hides progress, and pauses auto-scan.
+  - `showVideoView()` now restores focus to video widget.
+  - `triggerAutoWirelessScan()` now skips auto-scan when USB or wireless devices are already present.
+- `QtScrcpy/src/adb/adbprocess.cpp`
+  - Added overlap guard in `execute()` to wait/terminate previous running process before new command start.
+
+### 6.4 Validation Evidence
+- Static checks:
+  - No clipboard fallback path remains in `InputHandler` text handling.
+  - IME key suppression in `VideoWidget` key handlers is removed.
+  - USB-aware scan stop/skip logic present in main window device/scan lifecycle.
+  - ADB overlap guard present before `m_process->start(...)`.
+- Runtime expectation:
+  - No forced clipboard paste behavior for text input.
+  - USB-connected sessions should not keep auto wireless scan running.
+  - Reduced `Process is already running` ADB warnings under refresh pressure.

@@ -214,6 +214,14 @@ AdbProcess::AdbResult AdbProcess::execute(const QStringList& args, int timeoutMs
     AdbResult result;
     result.success = false;
     result.exitCode = -1;
+
+    // Guard against overlapping commands on the shared QProcess instance.
+    if (m_process->state() != QProcess::NotRunning) {
+        if (!m_process->waitForFinished(1000)) {
+            m_process->kill();
+            m_process->waitForFinished(1000);
+        }
+    }
     
     m_stdOutput.clear();
     m_stdError.clear();

@@ -320,6 +320,7 @@ void MainWindow::closeEvent(QCloseEvent* event)
 void MainWindow::onDevicesUpdated(const QList<DeviceInfo>& devices)
 {
     m_deviceList->clear();
+    bool hasUsb = false;
 
     for (const DeviceInfo& info : devices) {
         QString name = info.model.isEmpty() ? info.serial : info.model;
@@ -328,6 +329,7 @@ void MainWindow::onDevicesUpdated(const QList<DeviceInfo>& devices)
             label += QString(" (Wi-Fi %1:%2)").arg(info.ipAddress).arg(info.port);
             label = "[Wi-Fi] " + label;
         } else {
+            hasUsb = true;
             label += " (USB)";
             label = "[USB] " + label;
         }
@@ -340,6 +342,13 @@ void MainWindow::onDevicesUpdated(const QList<DeviceInfo>& devices)
         QListWidgetItem* item = new QListWidgetItem("未检测到设备", m_deviceList);
         item->setFlags(item->flags() & ~Qt::ItemIsSelectable);
         item->setForeground(Qt::gray);
+    }
+
+    if (hasUsb && m_deviceDiscovery->isScanning()) {
+        m_deviceDiscovery->stopScan();
+        m_scanBtn->setText("扫描无线设备");
+        m_scanProgress->setVisible(false);
+        m_statusLabel->setText("检测到 USB 设备，已停止无线扫描");
     }
 
     triggerAutoWirelessScan(false);
@@ -355,7 +364,7 @@ void MainWindow::onDeviceDoubleClicked(QListWidgetItem* item)
 
 void MainWindow::onScanDevices()
 {
-    if (m_deviceDiscovery->isScanning()) {
+    if (m_deviceDiscovery->isScanning() || m_scanProgress->isVisible()) {
         m_deviceDiscovery->stopScan();
         m_autoScanPausedByUser = true;
         m_scanBtn->setText("扫描无线设备");
@@ -428,6 +437,13 @@ void MainWindow::connectToDevice(const QString& serial)
         disconnectFromDevice();
     }
 
+    if (m_deviceDiscovery->isScanning()) {
+        m_deviceDiscovery->stopScan();
+    }
+    m_scanProgress->setVisible(false);
+    m_scanBtn->setText("扫描无线设备");
+    m_autoScanPausedByUser = true;
+
     m_currentSerial = serial;
     m_statusLabel->setText("正在连接设备 " + serial + " ...");
 
@@ -492,19 +508,18 @@ void MainWindow::showDeviceList()
 void MainWindow::showVideoView()
 {
     m_stackedWidget->setCurrentWidget(m_videoPage);
+    m_videoWidget->setFocus(Qt::OtherFocusReason);
 }
 
 void MainWindow::triggerAutoWirelessScan(bool force)
 {
-    Q_UNUSED(force)
-
     if (!m_autoScanEnabled || m_isConnected) {
         return;
     }
     if (m_autoScanPausedByUser) {
         return;
     }
-    if (m_stackedWidget->currentWidget() != m_deviceListPage) {
+    if (!force && m_stackedWidget->currentWidget() != m_deviceListPage) {
         return;
     }
     if (m_deviceDiscovery->isScanning()) {
@@ -513,13 +528,15 @@ void MainWindow::triggerAutoWirelessScan(bool force)
 
     const QList<DeviceInfo> devices = m_deviceManager->getDevices();
     bool hasWireless = false;
+    bool hasUsb = false;
     for (const DeviceInfo& d : devices) {
         if (d.isWireless) {
             hasWireless = true;
-            break;
+        } else {
+            hasUsb = true;
         }
     }
-    if (hasWireless) {
+    if (hasWireless || hasUsb) {
         return;
     }
 

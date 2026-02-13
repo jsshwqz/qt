@@ -22,6 +22,18 @@
 #include <QInputMethod>
 #include <QDebug>
 
+namespace {
+bool isAsciiText(const QString& text)
+{
+    for (const QChar& ch : text) {
+        if (ch.unicode() > 0x7F) {
+            return false;
+        }
+    }
+    return true;
+}
+}
+
 VideoWidget::VideoWidget(QWidget *parent)
     : QWidget(parent)
     , m_inputHandler(nullptr)
@@ -345,13 +357,6 @@ void VideoWidget::keyPressEvent(QKeyEvent* event)
         return;
     }
 
-    const bool imeVisible = QGuiApplication::inputMethod() && QGuiApplication::inputMethod()->isVisible();
-    if ((m_imeComposing || imeVisible) &&
-        !(event->modifiers() & (Qt::ControlModifier | Qt::AltModifier | Qt::MetaModifier))) {
-        event->accept();
-        return;
-    }
-    
     if (m_inputHandler) {
         m_inputHandler->handleKeyPress(event);
     }
@@ -359,13 +364,6 @@ void VideoWidget::keyPressEvent(QKeyEvent* event)
 
 void VideoWidget::keyReleaseEvent(QKeyEvent* event)
 {
-    const bool imeVisible = QGuiApplication::inputMethod() && QGuiApplication::inputMethod()->isVisible();
-    if ((m_imeComposing || imeVisible) &&
-        !(event->modifiers() & (Qt::ControlModifier | Qt::AltModifier | Qt::MetaModifier))) {
-        event->accept();
-        return;
-    }
-
     if (m_inputHandler) {
         m_inputHandler->handleKeyRelease(event);
     }
@@ -380,7 +378,9 @@ void VideoWidget::inputMethodEvent(QInputMethodEvent* event)
     if (m_inputHandler && event) {
         const QString committedText = event->commitString();
         if (!committedText.isEmpty()) {
-            m_inputHandler->handleTextInput(committedText);
+            if (isAsciiText(committedText)) {
+                m_inputHandler->handleTextInput(committedText);
+            }
             m_imeComposing = false;
         }
     }
