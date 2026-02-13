@@ -104,6 +104,8 @@ signals:
      */
     void shortcutTriggered(const QString& action);
 
+    void unicodeTextInputRequested(const QString& text);
+
 private:
     QPointF convertPosition(const QPoint& pos) const;
     int convertMouseButton(Qt::MouseButton button) const;

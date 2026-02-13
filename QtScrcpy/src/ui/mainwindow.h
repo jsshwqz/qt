@@ -91,6 +91,7 @@ private slots:
     void onFpsUpdated(double fps);
     void onVideoDoubleClicked();
     void onShortcutTriggered(const QString& action);
+    void onUnicodeTextInputRequested(const QString& text);
 
 private:
     void setupUi();
@@ -143,6 +144,7 @@ private:
     QString m_currentSerial;
     bool m_isConnected;
     QTimer* m_autoScanTimer;
+    QTimer* m_muteKeepAliveTimer;
     bool m_autoScanEnabled;
     bool m_autoScanPausedByUser;
     bool m_manualScanInProgress;

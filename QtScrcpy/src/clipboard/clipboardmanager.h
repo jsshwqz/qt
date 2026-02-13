@@ -51,6 +51,7 @@ public:
      * @brief 发送文本到设备
      */
     void sendToDevice(const QString& text);
+    void sendUnicodeInput(const QString& text);
 
     /**
      * @brief 从设备获取剪贴板
@@ -89,6 +90,7 @@ private:
     bool m_autoPaste;
     QString m_lastLocalText;
     QString m_lastDeviceText;
+    QString m_suppressedEchoText;
     qint64 m_clipboardSequence;
     bool m_ignoreLocalChange;
 };

@@ -9,6 +9,18 @@
 #include "stream/controlstream.h"
 #include <QDebug>
 
+namespace {
+bool containsNonAscii(const QString& text)
+{
+    for (QChar ch : text) {
+        if (ch.unicode() > 0x7F) {
+            return true;
+        }
+    }
+    return false;
+}
+}
+
 // 静态成员初始化
 QMap<int, int> InputHandler::s_keyMap;
 bool InputHandler::s_keyMapInitialized = false;
@@ -555,6 +567,11 @@ void InputHandler::handleKeyRelease(QKeyEvent* event)
 void InputHandler::handleTextInput(const QString& text)
 {
     if (!m_enabled || !m_controlStream || text.isEmpty()) {
+        return;
+    }
+
+    if (containsNonAscii(text)) {
+        emit unicodeTextInputRequested(text);
         return;
     }
 

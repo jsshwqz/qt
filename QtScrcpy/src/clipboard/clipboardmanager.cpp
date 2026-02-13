@@ -16,6 +16,7 @@ ClipboardManager::ClipboardManager(QObject *parent)
     , m_controlStream(nullptr)
     , m_syncing(false)
     , m_autoPaste(false)
+    , m_suppressedEchoText()
     , m_clipboardSequence(0)
     , m_ignoreLocalChange(false)
 {
@@ -83,6 +84,20 @@ void ClipboardManager::sendToDevice(const QString& text)
     m_controlStream->setClipboard(m_clipboardSequence, text, m_autoPaste);
 }
 
+void ClipboardManager::sendUnicodeInput(const QString& text)
+{
+    if (!m_controlStream || text.isEmpty()) {
+        return;
+    }
+
+    m_clipboardSequence++;
+    m_lastDeviceText = text;
+    m_suppressedEchoText = text;
+
+    qDebug() << "Unicode input via clipboard bridge:" << text.left(50) << "...";
+    m_controlStream->setClipboard(m_clipboardSequence, text, true);
+}
+
 void ClipboardManager::getFromDevice()
 {
     if (!m_controlStream) {
@@ -117,6 +132,12 @@ void ClipboardManager::onLocalClipboardChanged()
 void ClipboardManager::onDeviceClipboardReceived(const QString& text)
 {
     if (text.isEmpty()) {
+        return;
+    }
+
+    if (!m_suppressedEchoText.isEmpty() && text == m_suppressedEchoText) {
+        m_suppressedEchoText.clear();
+        emit syncCompleted(true);
         return;
     }
     

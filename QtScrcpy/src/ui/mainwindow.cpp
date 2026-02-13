@@ -47,6 +47,7 @@ MainWindow::MainWindow(QWidget *parent)
     , m_volumeController(nullptr)
     , m_isConnected(false)
     , m_autoScanTimer(new QTimer(this))
+    , m_muteKeepAliveTimer(new QTimer(this))
     , m_autoScanEnabled(true)
     , m_autoScanPausedByUser(false)
     , m_manualScanInProgress(false)
@@ -61,6 +62,13 @@ MainWindow::MainWindow(QWidget *parent)
         triggerAutoWirelessScan(false);
     });
     m_autoScanTimer->start();
+
+    m_muteKeepAliveTimer->setInterval(1500);
+    connect(m_muteKeepAliveTimer, &QTimer::timeout, this, [this]() {
+        if (m_isConnected && m_volumeController && m_volumeController->isMuted()) {
+            m_volumeController->setMediaVolume(0);
+        }
+    });
 
     m_deviceManager->startMonitoring();
     showDeviceList();
@@ -297,6 +305,8 @@ void MainWindow::setupConnections()
 
     connect(m_inputHandler, &InputHandler::shortcutTriggered,
             this, &MainWindow::onShortcutTriggered);
+    connect(m_inputHandler, &InputHandler::unicodeTextInputRequested,
+            this, &MainWindow::onUnicodeTextInputRequested);
 
     connect(m_toolbar, &ToolbarWidget::homeClicked, this, &MainWindow::onHomeClicked);
     connect(m_toolbar, &ToolbarWidget::backClicked, this, &MainWindow::onBackClicked);
@@ -473,6 +483,7 @@ void MainWindow::disconnectFromDevice()
         return;
     }
 
+    m_muteKeepAliveTimer->stop();
     m_clipboardManager->stopSync();
 
     if (m_volumeController) {
@@ -614,6 +625,9 @@ void MainWindow::onServerReady(int videoPort, int audioPort, int controlPort)
         const bool muteOnConnect = settings.value("control/muteOnConnect", true).toBool();
         if (muteOnConnect) {
             m_volumeController->saveAndMute();
+            m_muteKeepAliveTimer->start();
+        } else {
+            m_muteKeepAliveTimer->stop();
         }
     }
 
@@ -759,6 +773,21 @@ void MainWindow::onShortcutTriggered(const QString& action)
     else if (action == "expand_settings") onExpandSettingsClicked();
     else if (action == "resize_to_fit") m_videoWidget->resizeToFit();
     else if (action == "resize_to_screen") m_videoWidget->resizeToOriginal();
+}
+
+void MainWindow::onUnicodeTextInputRequested(const QString& text)
+{
+    if (!m_isConnected || !m_controlStream || text.isEmpty()) {
+        return;
+    }
+
+    if (m_clipboardManager) {
+        m_clipboardManager->sendUnicodeInput(text);
+        return;
+    }
+
+    static qint64 fallbackSequence = 1000;
+    m_controlStream->setClipboard(++fallbackSequence, text, true);
 }
 
 void MainWindow::onFilesDropped(const QStringList& paths)
