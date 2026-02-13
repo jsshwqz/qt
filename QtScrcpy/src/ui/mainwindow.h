@@ -144,7 +144,6 @@ private:
     QString m_currentSerial;
     bool m_isConnected;
     QTimer* m_autoScanTimer;
-    QTimer* m_muteKeepAliveTimer;
     bool m_autoScanEnabled;
     bool m_autoScanPausedByUser;
     bool m_manualScanInProgress;
