@@ -1,7 +1,7 @@
 # Change Note
 
 - Date: 2026-02-12
-- Commit: pending
+- Commit: dbaf679
 - Scope: auto-recover scrcpy server/client version mismatch during connect
 
 ## 1) Problem / Symptom

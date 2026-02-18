@@ -1,7 +1,7 @@
-﻿# Change Note
+# Change Note
 
 - Date: 2026-02-13
-- Commit: pending
+- Commit: ce44b03
 - Scope: Wi-Fi device discovery reliability on multi-NIC PCs
 
 ## 1) Problem / Symptom

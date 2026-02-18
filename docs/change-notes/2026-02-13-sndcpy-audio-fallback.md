@@ -1,7 +1,7 @@
 # Change Note
 
 - Date: 2026-02-13
-- Commit: pending
+- Commit: b74422c
 - Scope: Android 10 and below audio recovery via sndcpy fallback + packaging guard
 
 ## 1) Problem / Symptom

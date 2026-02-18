@@ -1,7 +1,7 @@
 # Change Note
 
 - Date: 2026-02-13
-- Commit: pending
+- Commit: 316b975
 - Scope: Wi-Fi scan target selection (single-subnet priority with saved fallback)
 
 ## 1) Problem / Symptom

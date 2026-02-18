@@ -1,7 +1,7 @@
 # Change Note
 
 - Date: 2026-02-12
-- Commit: pending
+- Commit: 3042bf1
 - Scope: fix black-screen-after-connect path and stop forced phone mute by default
 
 ## 1) Problem / Symptom

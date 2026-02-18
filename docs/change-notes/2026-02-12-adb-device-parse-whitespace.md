@@ -1,7 +1,7 @@
 # Change Note
 
 - Date: 2026-02-12
-- Commit: pending
+- Commit: 97d797c
 - Scope: device list parsing compatibility for ADB output
 
 ## 1) Problem / Symptom

@@ -1,7 +1,7 @@
 # Change Note
 
 - Date: 2026-02-12
-- Commit: pending
+- Commit: 6cba7ea
 - Scope: add runtime ADB diagnostic trace for faster field debugging
 
 ## 1) Problem / Symptom

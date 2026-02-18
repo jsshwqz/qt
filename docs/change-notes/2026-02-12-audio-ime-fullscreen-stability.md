@@ -1,7 +1,7 @@
-﻿# Change Note
+# Change Note
 
 - Date: 2026-02-12
-- Commit: pending
+- Commit: 2aa45dd
 - Scope: audio socket lifecycle + Android-version audio gating + IME/fullscreen interaction polish
 
 ## 1) Problem / Symptom

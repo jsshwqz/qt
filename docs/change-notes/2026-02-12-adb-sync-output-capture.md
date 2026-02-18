@@ -1,7 +1,7 @@
 # Change Note
 
 - Date: 2026-02-12
-- Commit: pending
+- Commit: 7c45dad
 - Scope: stabilize ADB output capture in synchronous command path
 
 ## 1) Problem / Symptom

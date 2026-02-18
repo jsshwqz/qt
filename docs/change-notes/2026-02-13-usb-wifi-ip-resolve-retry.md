@@ -1,7 +1,7 @@
 # Change Note
 
 - Date: 2026-02-13
-- Commit: pending
+- Commit: ce58410
 - Scope: USB-assisted Wi-Fi connect reliability after `adb tcpip`
 
 ## 1) Problem / Symptom

@@ -1,7 +1,7 @@
-﻿# Change Note
+# Change Note
 
 - Date: 2026-02-13
-- Commit: pending
+- Commit: d4f4b72
 - Scope: rollback non-IME runtime changes to recover smooth playback while keeping Chinese input
 
 ## 1) Problem / Symptom

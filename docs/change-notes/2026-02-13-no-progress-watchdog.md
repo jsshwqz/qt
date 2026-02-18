@@ -15,12 +15,12 @@
     - `stopPendingOperation(...)`
     - `onOperationWatchdogTick()`
   - Behavior:
-    - If scanning has no progress for 2 minutes: stop scan automatically and keep app responsive.
-    - If connecting has no progress for 2 minutes: auto-cancel and return to device list.
+    - If scanning has no progress for 5 minutes: stop scan automatically and keep app responsive.
+    - If connecting has no progress for 5 minutes: auto-cancel and return to device list.
   - Timeout settings are now configurable via `QSettings`:
     - `runtime/scanNoProgressTimeoutSec`
     - `runtime/connectNoProgressTimeoutSec`
-    - Range: `30` to `600` seconds, default `120` seconds.
+    - Range: `30` to `600` seconds, default `300` seconds.
 
 ## Additional mitigation
 - File: `QtScrcpy/src/adb/adbprocess.cpp`

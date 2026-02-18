@@ -1,7 +1,7 @@
 # Change Note
 
 - Date: 2026-02-12
-- Commit: pending
+- Commit: d716d76
 - Scope: QtScrcpy wireless scan stability and ADB detection robustness
 
 ## 1) Problem / Symptom

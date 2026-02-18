@@ -1,7 +1,7 @@
 # Change Note
 
 - Date: 2026-02-13
-- Commit: pending
+- Commit: e1670d5
 - Scope: direct IME text path, Wi-Fi scan lifecycle, mute default behavior
 
 ## 1) Problem / Symptom

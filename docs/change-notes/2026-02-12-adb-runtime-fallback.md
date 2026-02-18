@@ -1,7 +1,7 @@
 # Change Note
 
 - Date: 2026-02-12
-- Commit: pending
+- Commit: 440c489
 - Scope: QtScrcpy ADB runtime path fallback and availability detection
 
 ## 1) Problem / Symptom

@@ -1,7 +1,7 @@
 # 2026-02-12 Server Stop Error Suppression
 
 - Date: 2026-02-12
-- Commit: pending (this note is committed with the fix)
+- Commit: 6fc8884
 - Scope: Runtime lifecycle handling around server process stop/disconnect
 
 ## 1) Problem / Symptom

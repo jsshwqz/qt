@@ -1,7 +1,7 @@
-Ôªø# Change Note
+# Change Note
 
 - Date: 2026-02-13
-- Commit: pending
+- Commit: a91dd2f
 - Scope: improve Wi-Fi connect path, file drag/drop coverage, and clipboard operations
 
 ## 1) Problem / Symptom
@@ -14,7 +14,7 @@
 ## 2) Root Cause
 - Wi-Fi flow depended primarily on subnet scanning and manual IP entry, without a USB-assisted `adb tcpip` bootstrap in the main flow.
 - Main window did not handle drag/drop events, so dropping on non-video regions was ignored.
-- Clipboard sync had background auto-sync, but no explicit menu actions for ‚Äúpush local clipboard‚Äù / ‚Äúpull device clipboard‚Äù, reducing operability and testability.
+- Clipboard sync had background auto-sync, but no explicit menu actions for °∞push local clipboard°± / °∞pull device clipboard°±, reducing operability and testability.
 
 ## 3) Changes Made
 - `QtScrcpy/src/ui/mainwindow.h`

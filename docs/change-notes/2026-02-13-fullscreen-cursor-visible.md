@@ -1,7 +1,7 @@
 # Change Note
 
 - Date: 2026-02-13
-- Commit: pending
+- Commit: faeeea9
 - Scope: Fullscreen usability (keep mouse cursor visible)
 
 ## 1) Problem / Symptom

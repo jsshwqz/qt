@@ -1,7 +1,7 @@
-﻿# Change Note
+# Change Note
 
 - Date: 2026-02-13
-- Commit: pending
+- Commit: 8dcd1ca
 - Scope: smoothness stabilization and fullscreen adaptation polish
 
 ## 1) Problem / Symptom

@@ -43,8 +43,8 @@
 #include <QThread>
 
 namespace {
-constexpr int kDefaultScanNoProgressTimeoutSec = 120;
-constexpr int kDefaultConnectNoProgressTimeoutSec = 120;
+constexpr int kDefaultScanNoProgressTimeoutSec = 300;
+constexpr int kDefaultConnectNoProgressTimeoutSec = 300;
 constexpr int kMinNoProgressTimeoutSec = 30;
 constexpr int kMaxNoProgressTimeoutSec = 600;
 }

@@ -1,7 +1,7 @@
 # Change Note
 
 - Date: 2026-02-12
-- Commit: pending
+- Commit: efb5836
 - Scope: fix black screen (`0 FPS`) after successful connect on newer scrcpy server
 
 ## 1) Problem / Symptom

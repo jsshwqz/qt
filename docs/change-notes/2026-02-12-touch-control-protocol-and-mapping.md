@@ -1,7 +1,7 @@
 # 2026-02-12 Touch Control Protocol and Mapping
 
 - Date: 2026-02-12
-- Commit: pending (this note is committed with the fix)
+- Commit: 36b75a7
 - Scope: Runtime control path (`VideoWidget -> InputHandler -> ControlStream -> ControlMessage`)
 
 ## 1) Problem / Symptom
